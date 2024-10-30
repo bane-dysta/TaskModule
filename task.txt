@@ -1,0 +1,23 @@
+# Fluorescence:
+$opt
+%origin
+# opt freq wb97xd/TZVP 
+
+$td
+%opt
+# opt td freq wb97xd/TZVP 
+
+$abs
+%opt
+# td wb97xd/TZVP 
+
+# NMRs:
+$opt
+%origin
+# b3lyp/6-31g* opt freq em=gd3bj
+
+$nmr
+%opt
+# revTPSSrevTPSS/gen NMR scrf=(SMD,solvent=chloroform)
+add = \n@/work/home/gaus7/apprepo/gaussian/16-hy/app/g16/basis/pcseg-1.gbs
+
