@@ -46,8 +46,16 @@ task_module.py运行后，会对TASKS_DIR下的每个子文件夹的内容进行
 "#"后的内容为你想要当前任务块使用的Gaussian任务关键词。特殊语法{}表示为{}内的每一个元素创建一个将{}整体替换为该元素的输入文件。
 ### !
 "!"是特殊语法，目前需要与slurms脚本结合才能发挥作用。作用是将命令词解析为bash命令，输出到任务目录下的comd文件中。slurms脚本运行时会尝试读取comd文件，将其中内容复制到slurm脚本末尾，如此即可实现任务结束后自动调用multiwfn分析。目前仅支持三种命令：
-- scripts：语法为scripts=(a,b,c,d,...)
-- multiwfn：语法为multiwfn=(a>b,c>d,...)
+- scripts：语法为scripts=(a,b,c,d,...)，脚本解析后会转换为运行指定环境变量TASKSCRIPTS_PATH目录下的脚本：
+  ~~~
+  bash 
+  ~~~
+- multiwfn：语法为multiwfn=(a>b,c>d,...)，脚本解析后会生成multiwfn命令
+  ~~~
+  Multiwfn b < $wfn_examples/a.txt > mw_a_out.txt
+  Multiwfn d < $wfn_examples/c.txt > mw_c_out.txt
+  ~~~
+  其中，$wfn_examples变量可以通过export环境变量WFN_EXAMPLES_PATH来设置。
 - copy：语法为copy=(source1>target1,source2>target2,...)
 - 其他
 

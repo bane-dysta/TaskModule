@@ -28,7 +28,7 @@ def parse_multiwfn(content):
             input_file = input_file.strip()
             template = template.strip()
             # 生成 multiwfn 的命令
-            commands.append(f"Multiwfn ./{input_file} < $wfn_examples/{template}.txt")
+            commands.append(f"Multiwfn ./{input_file} < $wfn_examples/{template}.txt > mw_{template}_out.txt")
     return commands
 
 def parse_copy(content):
