@@ -61,7 +61,7 @@ def read_and_process_smiles_file(file_path):
 def main():
     parser = argparse.ArgumentParser(description='Generate Gaussian input files.')
     parser.add_argument('-f', '--functional', default='wB97XD', help='Functional to use in the calculation (default: wB97XD)')
-    parser.add_argument('-b', '--basis', default='TZVP', help='Basis set to use in the calculation (default: TZVP)')
+    parser.add_argument('-b', '--basis', default='def2SVP', help='Basis set to use in the calculation (default: def2-SVP)')
     parser.add_argument('-scrf', '--solvent', default='water', help='Solvent to use in the SCRF method (default: water)')
     parser.add_argument('-p', '--path', default=DEFAULT_PATH, help='Path to the directory containing the SMILES file (default: ~/AutoCalc/tasks)')
     
