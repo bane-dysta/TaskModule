@@ -34,6 +34,7 @@ task_module.py运行后，会对TASKS_DIR下的每个子文件夹的内容进行
 
     $task_name
     %opt
+    ! scripts=(fchk) multiwfn=(hole=*.fchk,uvvis=*.log)
     # opt freq
 ### $
 "$"作为一个任务块的开始，定义了该任务的名称。脚本处理该任务块时，会为其创建名为*task_name*的文件夹，对应输入文件均创建在该文件夹下。
@@ -43,6 +44,13 @@ task_module.py运行后，会对TASKS_DIR下的每个子文件夹的内容进行
 - %smiles=CCO 表示从smiles字符串(当前示例为乙醇)转换为3D结构。也支持在此处输入CAS号，嗯，我知道这很蠢。
 ### \#
 "#"后的内容为你想要当前任务块使用的Gaussian任务关键词。特殊语法{}表示为{}内的每一个元素创建一个将{}整体替换为该元素的输入文件。
+### !
+"!"是特殊语法，目前需要与slurms脚本结合才能发挥作用。作用是将命令词解析为bash命令，输出到任务目录下的comd文件中。slurms脚本运行时会尝试读取comd文件，将其中内容复制到slurm脚本末尾，如此即可实现任务结束后自动调用multiwfn分析。目前仅支持三种命令：
+- scripts：语法为scripts=(a,b,c,d,...)
+- multiwfn：语法为multiwfn=(a>b,c>d,...)
+- copy：语法为copy=(source1>target1,source2>target2,...)
+- 其他
+
 ## 3. 待开发功能
 - %支持指定目录文件
 - 支持xyz格式文件
