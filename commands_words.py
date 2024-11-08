@@ -1,8 +1,8 @@
 import os
 
 # 配置：定义路径变量（修改路径时只需修改这里）
-TASKSCRIPTS_PATH = "/work/home/gaus7/Taskscripts"
-WFN_EXAMPLES_PATH = "/work/home/gaus7/wfn_examples"  # 定义 wfn_examples 的路径
+TASKSCRIPTS_PATH = "~/apprepo/gaussian/16-hy/scripts"
+WFN_EXAMPLES_PATH = "~/apprepo/gaussian/16-hy/scripts/wfntxts"  # 定义 wfn_examples 的路径
 
 def parse_scripts(content):
     """处理 scripts=(a,b,c,...) 格式的命令。"""
@@ -60,9 +60,11 @@ def parse_and_write_commands(commands, output_dir):
         output_file = os.path.join(output_dir, 'comd')
         with open(output_file, 'w') as f:
             # 在文件开头写入 $Taskscripts 和 $wfn_examples 变量定义
-            f.write("Parsed Commands:\n")
+            f.write("# Parsed Commands from task-comd:\n")
             f.write(f"export Taskscripts={TASKSCRIPTS_PATH}\n")
-            f.write(f"export wfn_examples={WFN_EXAMPLES_PATH}\n\n")
+            f.write(f"export wfn_examples={WFN_EXAMPLES_PATH}\n")
+            f.write(f"# Multiwfn env\n")
+            f.write(f"source $wfn_examples/env.sh\n\n")
 
             # 逐个解析并写入命令
             for command in commands:
