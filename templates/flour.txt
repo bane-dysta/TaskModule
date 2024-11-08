@@ -10,10 +10,12 @@ $td
 
 $abs-WATER-SMD
 %opt
+! scripts=(fchk) multiwfn=(hole123=*.fchk)
 # td wb97xd/TZVP scrf=(SMD,solvent=water) 
 
 $td-WATER-SMD
 %td
+! scripts=(fchk) multiwfn=(hole123=*.fchk)
 # td=eqsolv wb97xd/TZVP scrf=(SMD,solvent=water)
 
 $opt-DCM
@@ -26,10 +28,12 @@ $td-DCM
 
 $abs-DCM-SMD
 %opt-DCM
+! scripts=(fchk) multiwfn=(hole123=*.fchk)
 # td wb97xd/TZVP scrf=(SMD,solvent=dichloromethane) 
 
 $td-DCM-SMD
 %td-DCM
+! scripts=(fchk) multiwfn=(hole123=*.fchk)
 # td=eqsolv wb97xd/TZVP scrf=(SMD,solvent=dichloromethane) 
 
 $opt-ETOH
@@ -42,10 +46,12 @@ $td-ETOH
 
 $abs-ETOH-SMD
 %opt-ETOH
+! scripts=(fchk) multiwfn=(hole123=*.fchk)
 # td wb97xd/TZVP scrf=(SMD,solvent=ethanol) 
 
 $td-ETOH-SMD
 %td-ETOH
+! scripts=(fchk) multiwfn=(hole123=*.fchk)
 # td=eqsolv wb97xd/TZVP scrf=(SMD,solvent=ethanol)
 
 $opt-DMSO
@@ -58,8 +64,10 @@ $td-DMSO
 
 $abs-DMSO-SMD
 %opt-DMSO
+! scripts=(fchk) multiwfn=(hole123=*.fchk)
 # td wb97xd/TZVP scrf=(SMD,solvent=DiMethylSulfoxide) 
 
 $td-DMSO-SMD
 %td-DMSO
+! scripts=(fchk) multiwfn=(hole123=*.fchk)
 # td=eqsolv wb97xd/TZVP scrf=(SMD,solvent=DiMethylSulfoxide) 

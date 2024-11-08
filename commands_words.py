@@ -23,7 +23,7 @@ def parse_multiwfn(content):
         if len(key_value) == 2:  # 检查是否为 a=b 格式
             a, b = key_value[0].strip(), key_value[1].strip()
             # 生成 multiwfn 的命令
-            commands.append(f"multiwfn ./{b} < $wfn_examples/{a}.txt")
+            commands.append(f"Multiwfn ./{b} < $wfn_examples/{a}.txt")
     return commands
 
 def parse_copy(content):

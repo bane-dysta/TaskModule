@@ -65,12 +65,14 @@ submit_job() {
     local log_file="${input_file%.gjf}.log"
     local file_name=$(basename "$input_file" .gjf)
     local chk_file="${input_file%.gjf}.chk"  # 与输入文件和log文件相同的目录
+    local comd_file="$input_dir/comd"  # comd文件路径
 
     # 切换到文件所在的目录
     if cd "$input_dir"; then
         echo "Switched to directory $input_dir"
     else
         echo "Error: Failed to switch to directory $input_dir"
+        return 1
     fi
 
     # 修改chk路径
@@ -79,6 +81,8 @@ submit_job() {
     fi
 
     local job_script="${input_file%.gjf}.sh"
+    
+    # 创建基本的作业脚本
     cat > "$job_script" <<EOF
 #!/bin/bash
 #SBATCH -J ${file_name}
@@ -91,6 +95,13 @@ export PGI_FASTMATH_CPU=sandybridge
 g16 "$input_file" > "$log_file"
 EOF
 
+    # 检查是否存在comd文件，如果存在则添加到作业脚本末尾
+    if [ -f "$comd_file" ]; then
+        echo "Found comd file, appending its contents to job script..."
+        echo -e "\n# Commands from comd file" >> "$job_script"
+        cat "$comd_file" >> "$job_script"
+    fi
+
     local job_output=$(sbatch "$job_script")
     local job_id=$(echo "$job_output" | awk '{print $4}')
     echo "Submitted batch job $job_id for $input_file"
@@ -99,10 +110,9 @@ EOF
     # 记录到日志文件
     echo "$(date '+%Y-%m-%d %H:%M:%S') - Job $job_id: $input_file" >> "$HOME/.sub/submit.log"
     
-    # 切换回到原来的路径（如果需要的话）
+    # 切换回到原来的路径
     cd - >/dev/null  # 切换回之前的目录，隐藏cd的输出
 }
-
 
 # 主逻辑，维持至少10个作业
 current_jobs=$(squeue -u $USER | wc -l)
