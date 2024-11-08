@@ -1,0 +1,65 @@
+// Standard Fluorescence:
+
+$opt
+%origin
+# opt freq wb97xd/TZVP scrf
+
+$td
+%opt
+# opt td freq wb97xd/TZVP scrf
+
+$abs-WATER-SMD
+%opt
+# td wb97xd/TZVP scrf=(SMD,solvent=water) 
+
+$td-WATER-SMD
+%td
+# td=eqsolv wb97xd/TZVP scrf=(SMD,solvent=water)
+
+$opt-DCM
+%opt
+# opt freq wb97xd/TZVP scrf=(solvent=dichloromethane) 
+
+$td-DCM
+%td
+# opt td freq wb97xd/TZVP scrf=(solvent=dichloromethane) 
+
+$abs-DCM-SMD
+%opt-DCM
+# td wb97xd/TZVP scrf=(SMD,solvent=dichloromethane) 
+
+$td-DCM-SMD
+%td-DCM
+# td=eqsolv wb97xd/TZVP scrf=(SMD,solvent=dichloromethane) 
+
+$opt-ETOH
+%opt
+# opt freq wb97xd/TZVP scrf=(solvent=ethanol) 
+
+$td-ETOH
+%td
+# opt td freq wb97xd/TZVP scrf=(solvent=ethanol) 
+
+$abs-ETOH-SMD
+%opt-ETOH
+# td wb97xd/TZVP scrf=(SMD,solvent=ethanol) 
+
+$td-ETOH-SMD
+%td-ETOH
+# td=eqsolv wb97xd/TZVP scrf=(SMD,solvent=ethanol)
+
+$opt-DMSO
+%opt
+# opt freq wb97xd/TZVP scrf=(solvent=DiMethylSulfoxide) 
+
+$td-DMSO
+%td
+# opt td freq wb97xd/TZVP scrf=(solvent=DiMethylSulfoxide) 
+
+$abs-DMSO-SMD
+%opt-DMSO
+# td wb97xd/TZVP scrf=(SMD,solvent=DiMethylSulfoxide) 
+
+$td-DMSO-SMD
+%td-DMSO
+# td=eqsolv wb97xd/TZVP scrf=(SMD,solvent=DiMethylSulfoxide) 

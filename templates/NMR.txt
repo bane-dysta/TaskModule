@@ -1,0 +1,10 @@
+// NMRs:
+
+$opt
+%origin
+# b3lyp/6-31g* opt freq em=gd3bj
+
+$nmr
+%opt
+# revTPSSrevTPSS/gen NMR scrf=(SMD,solvent=chloroform)
+add = \n@/work/home/gaus7/apprepo/gaussian/16-hy/app/g16/basis/pcseg-1.gbs
