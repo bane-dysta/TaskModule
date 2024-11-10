@@ -24,7 +24,7 @@ def parse_multiwfn(content):
     for item in items:
         item = item.strip()
         if '>' in item:
-            input_file, template = item.split('>')
+            template, input_file = item.split('>')
             input_file = input_file.strip()
             template = template.strip()
             # 生成 multiwfn 的命令
