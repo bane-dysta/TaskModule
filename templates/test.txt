@@ -1,3 +1,22 @@
-$sp
+$origin
 %origin
 # sp test
+
+$smiles
+%smiles=C
+# sp test
+
+$cas
+%smiles=50-00-0
+# sp test
+
+$braces
+%smiles
+# {sp,test}
+
+$comd
+%smiles
+! scripts=(fchk) multiwfn=(fmo>*.fchk,hole>*.fchk)  copy=(*.fchk>./..)
+# td
+
+
