@@ -1,1 +1,0 @@
-我想把不必要的变量合并，比如确定一个基础路径AUTOTASK_BASE=~/scripts/tasks，AUTOTASK_CALC=~/AutoCalc/tasks，其他的路径都由这两个来衍生。"~/scripts/python"可以改为~/scripts/tasks/geom_tools

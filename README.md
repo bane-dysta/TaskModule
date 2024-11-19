@@ -1,9 +1,32 @@
-# task自动计算程序使用说明
+# Tasker: Gaussian计算任务自动化系统
+
+[![Version](https://img.shields.io/badge/version-1.0.0-blue.svg)](https://github.com/yourusername/gaussian-automation)
+[![Python](https://img.shields.io/badge/python-3.6+-yellow.svg)](https://www.python.org/)
+
+## 💡简介
+
+Gaussian计算任务自动化系统是一套Python脚本工具集，用于自动化处理Gaussian计算任务，包括任务生成、结构处理和后处理分析等功能。系统支持多种输入格式，提供模板管理，可以与Multiwfn无搭配使用实现自动分析。
+
+## 🔧运行环境
+- 系统：Linux(谁家量化计算在Windows上做啊)
+- 网络需求：在以CAS号方式输入结构时，需要连接网络调用PubChem的API接口
+- 环境依赖：
+  - 开发环境python 3.8，理论上兼容python3
+  - 若以smiles字符串形式输入结构，需要rdkit
+  - 若以CAS号形式输入结构，需要rdkit和requests
+- 环境变量：
+  ```bash
+  export AUTOTASKER_CALC_PATH="/path/to/calc_folder"
+  ```
+
+## 
+
 
 ## 1. 内容
 - task_module.py
 - geom_extract.py
 - smiles_parser.py
+- 
 ### 1.1 task_module.py
 该脚本存放在*script_path2*，为main脚本，负责解析任务块、调度其他脚本完成任务。
 ```python
