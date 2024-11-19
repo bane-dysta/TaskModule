@@ -1,8 +1,8 @@
 import os
 
 # 配置：定义路径变量（修改路径时只需修改这里）
-TASKSCRIPTS_PATH = "~/apprepo/gaussian/16-hy/scripts"
-WFN_EXAMPLES_PATH = "~/apprepo/gaussian/16-hy/scripts/wfntxts"  # 定义 wfn_examples 的路径
+TASKSCRIPTS_PATH = "~/scripts/tasks"
+WFN_EXAMPLES_PATH = "~/scripts/tasks/wfntxts"  # 定义 wfn_examples 的路径
 
 def parse_scripts(content):
     """处理 scripts=(a,b,c,...) 格式的命令。"""

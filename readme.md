@@ -45,7 +45,7 @@ task_module.py运行后，会对TASKS_DIR下的每个子文件夹的内容进行
 
     $task_name
     %opt
-    ! scripts=(fchk) multiwfn=(hole>*.fchk,uvvis>*.log)
+    ! scripts=(fchk) multiwfn=(hole=*.fchk,uvvis=*.log)
     # opt freq
 ### $
 "$"作为一个任务块的开始，定义了该任务的名称。脚本处理该任务块时，会为其创建名为*task_name*的文件夹，对应输入文件均创建在该文件夹下。

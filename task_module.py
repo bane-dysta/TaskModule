@@ -5,8 +5,8 @@ import logging
 import shutil
 from task_generator import check_and_expand_task_file  # type: ignore
 
-script_path1 = os.path.expanduser('~/apprepo/gaussian/16-hy/scripts/python')
-script_path2 = os.path.expanduser('~/apprepo/gaussian/16-hy/scripts/tasks')
+script_path1 = os.path.expanduser('~/scripts/python')
+script_path2 = os.path.expanduser('~/scripts/tasks')
 sys.path.append(script_path1)
 sys.path.append(script_path2)
 # 定义任务路径

@@ -1,0 +1,73 @@
+// Standard Fluorescence:
+
+$opt
+%origin
+# opt freq wb97xd/Def2SVP scrf
+
+$td
+%opt
+# opt td freq wb97xd/Def2SVP scrf
+
+$abs-WATER-SMD
+%opt
+! scripts=(fchk) multiwfn=(hole123>*.fchk)
+# td wb97xd/TZVP scrf=(SMD,solvent=water) 
+
+$td-WATER-SMD
+%td
+! scripts=(fchk) multiwfn=(hole123>*.fchk)
+# td=eqsolv wb97xd/TZVP scrf=(SMD,solvent=water)
+
+$opt-DCM
+%opt
+# opt freq wb97xd/Def2SVP scrf=(solvent=dichloromethane) 
+
+$td-DCM
+%td
+# opt td freq wb97xd/Def2SVP scrf=(solvent=dichloromethane) 
+
+$abs-DCM-SMD
+%opt-DCM
+! scripts=(fchk) multiwfn=(hole123>*.fchk)
+# td wb97xd/TZVP scrf=(SMD,solvent=dichloromethane) 
+
+$td-DCM-SMD
+%td-DCM
+! scripts=(fchk) multiwfn=(hole123>*.fchk)
+# td=eqsolv wb97xd/TZVP scrf=(SMD,solvent=dichloromethane) 
+
+$opt-ETOH
+%opt
+# opt freq wb97xd/Def2SVP scrf=(solvent=ethanol) 
+
+$td-ETOH
+%td
+# opt td freq wb97xd/Def2SVP scrf=(solvent=ethanol) 
+
+$abs-ETOH-SMD
+%opt-ETOH
+! scripts=(fchk) multiwfn=(hole123>*.fchk)
+# td wb97xd/TZVP scrf=(SMD,solvent=ethanol) 
+
+$td-ETOH-SMD
+%td-ETOH
+! scripts=(fchk) multiwfn=(hole123>*.fchk)
+# td=eqsolv wb97xd/TZVP scrf=(SMD,solvent=ethanol)
+
+$opt-DMSO
+%opt
+# opt freq wb97xd/Def2SVP scrf=(solvent=DiMethylSulfoxide) 
+
+$td-DMSO
+%td
+# opt td freq wb97xd/Def2SVP scrf=(solvent=DiMethylSulfoxide) 
+
+$abs-DMSO-SMD
+%opt-DMSO
+! scripts=(fchk) multiwfn=(hole123>*.fchk)
+# td wb97xd/TZVP scrf=(SMD,solvent=DiMethylSulfoxide) 
+
+$td-DMSO-SMD
+%td-DMSO
+! scripts=(fchk) multiwfn=(hole123>*.fchk)
+# td=eqsolv wb97xd/TZVP scrf=(SMD,solvent=DiMethylSulfoxide) 
