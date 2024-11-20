@@ -10,10 +10,10 @@ source $HOME/miniconda/etc/profile.d/conda.sh
 conda activate rdkitenv
 
 # 检查 Python 脚本是否存在
-if [ -f "$HOME/apprepo/gaussian/16-hy/scripts/tasks/task_module.py" ]; then
-    python3 $HOME/apprepo/gaussian/16-hy/scripts/tasks/task_module.py  # 调用Python脚本
+if [ -f "$HOME/scripts/tasks/task_module.py" ]; then
+    python3 $HOME/scripts/tasks/task_module.py  # 调用Python脚本
 else
-    echo "Error: Python script $HOME/apprepo/gaussian/16-hy/scripts/tasks/task_module.py not found."
+    echo "Error: Python script $HOME/scripts/tasks/task_module.py not found."
 fi
 
 # 初始化一个空的数组来存储未处理的文件

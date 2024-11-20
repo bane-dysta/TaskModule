@@ -3,16 +3,17 @@ import re
 import sys
 import logging
 import shutil
-from task_generator import check_and_expand_task_file  # type: ignore
+from task_generator import check_and_expand_task_file
+from config import AUTOTASKER_GEOMTOOLS_PATH, AUTOTASKER_CALC_PATH, AUTOTASKER_LOG_PATH, AUTOTASKER_BASE_PATH
 
-script_path1 = os.path.expanduser('~/apprepo/gaussian/16-hy/scripts/python')
-script_path2 = os.path.expanduser('~/apprepo/gaussian/16-hy/scripts/tasks')
+script_path1 = AUTOTASKER_GEOMTOOLS_PATH
+script_path2 = AUTOTASKER_BASE_PATH
 sys.path.append(script_path1)
 sys.path.append(script_path2)
 # 定义任务路径
-TASKS_DIR = os.path.expanduser("~/AutoCalc/tasks")
+TASKS_DIR = AUTOTASKER_CALC_PATH
 
-from geom_extract import extract_info_from_gfj, extract_final_optimized_coordinates_from_log  # type: ignore
+from geom_extract import extract_info_from_gfj, extract_final_optimized_coordinates_from_log
 from commands_words import parse_and_write_commands
 
 # 定义新的日志级别 'skip'，设定为比 'info' 低
@@ -30,7 +31,7 @@ logging.Logger.skip = skip
 logger = logging.getLogger(__name__)
 
 # 使用之前的日志路径
-log_file_path = os.path.expanduser('~/AutoCalc/tasks/task_processing.log')
+log_file_path = AUTOTASKER_LOG_PATH
 
 # 配置日志，指定输出到日志文件
 logging.basicConfig(
