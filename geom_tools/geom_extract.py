@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import re
+import os
 
 # 原子序号到元素符号的映射
 atomic_number_to_symbol = {
@@ -201,3 +202,51 @@ def extract_scan_coordinates_from_scan(scan_file_path):
             outfile.write("\n")
 
     return results
+
+def extract_info_from_xyz(xyz_file_path):
+    """
+    从 XYZ 文件中提取几何信息、电荷和自旋多重度
+    XYZ 格式:
+    原子数
+    charge spin_multiplicity
+    元素符号 x y z
+    ...
+    """
+    result = {
+        'charge': None,
+        'spin_multiplicity': None,
+        'coordinates': []
+    }
+
+    with open(xyz_file_path, 'r') as file:
+        lines = file.readlines()
+        
+        # 确保文件至少有3行
+        if len(lines) < 3:
+            raise ValueError("Invalid XYZ file format: file too short")
+            
+        # 第二行包含电荷和自旋多重度
+        charge_spin = lines[1].strip().split()
+        if len(charge_spin) == 2:
+            result['charge'] = int(charge_spin[0])
+            result['spin_multiplicity'] = int(charge_spin[1])
+        
+        # 从第三行开始读取坐标
+        for line in lines[2:]:
+            parts = line.strip().split()
+            if len(parts) == 4:  # 元素符号 + x y z
+                result['coordinates'].append(line.strip())
+
+    return result
+
+def extract_info_from_input(input_file):
+    """
+    根据文件扩展名选择合适的提取函数
+    """
+    ext = os.path.splitext(input_file)[1].lower()
+    if ext == '.xyz':
+        return extract_info_from_xyz(input_file)
+    elif ext in ['.gjf', '.com']:
+        return extract_info_from_gfj(input_file)
+    else:
+        raise ValueError(f"Unsupported file format: {ext}")
