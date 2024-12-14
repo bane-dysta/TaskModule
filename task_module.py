@@ -4,7 +4,14 @@ import sys
 import logging
 import shutil
 from task_generator import check_and_expand_task_file
-from config import AUTOTASKER_GEOMTOOLS_PATH, AUTOTASKER_CALC_PATH, AUTOTASKER_LOG_PATH, AUTOTASKER_BASE_PATH
+from config import AUTOTASKER_GEOMTOOLS_PATH, AUTOTASKER_CALC_PATH, AUTOTASKER_LOG_PATH, AUTOTASKER_BASE_PATH, AUTOTASKER_TEMPLATES_PATH
+
+# 获取当前脚本所在目录
+current_dir = os.path.dirname(os.path.abspath(__file__))
+if current_dir not in sys.path:
+    sys.path.append(current_dir)
+
+from orca_generator import OrcaInputGenerator
 
 script_path1 = AUTOTASKER_GEOMTOOLS_PATH
 script_path2 = AUTOTASKER_BASE_PATH
@@ -12,8 +19,9 @@ sys.path.append(script_path1)
 sys.path.append(script_path2)
 # 定义任务路径
 TASKS_DIR = AUTOTASKER_CALC_PATH
+ORCA_TEMPLATES_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'ORCA')
 
-from geom_extract import extract_info_from_gfj, extract_final_optimized_coordinates_from_log
+from geom_extract import extract_info_from_gfj, extract_final_optimized_coordinates_from_log, extract_info_from_input
 from commands_words import parse_and_write_commands
 
 # 定义新的日志级别 'skip'，设定为比 'info' 低
@@ -68,48 +76,60 @@ def process_smiles_field(task_info, task_dir):
   
 def parse_task_file(task_file):
     """
-    解析 .task 文件，提取任务信息并解析命令词。支持多个命令词。
+    解析 .task 文件，提取任务信息并解析命令词。支持 ORCA 任务块。
     """
     tasks = []
     current_task = {}
+    in_orca_block = False
+    orca_content = []
 
     with open(task_file, 'r') as f:
-        task_content = f.read().split('\n\n')  # 按段落分割
+        lines = f.readlines()
         
-        for task in task_content:
-            lines = task.split('\n')
-            current_task = {
-                'job_title': None,
-                'source': None,
-                'command_words': [],  # 用于存储多个命令
-                'keywords': None,
-                'extra_keywords': None,
-                'smiles': None,  # 新增字段，用于存储 SMILES 字符串
-                'quoted': False  # 新增字段，用于判断任务块是否已加引号
-            }
-            
-            for line in lines:
-                line = line.strip()
-                if line.startswith('$'):  # 匹配任务名称
-                    current_task['job_title'] = line.strip('$').strip()
-                    if line.startswith('$"') and line.endswith('"'):  # 检查是否带引号
-                        current_task['quoted'] = True
-                elif line.startswith('%smiles='):  # 匹配 SMILES 字段
-                    current_task['smiles'] = line.split('=', 1)[1].strip()
-                    # print("debug_SMILES:", current_task['smiles'])
-                elif line.startswith('%'):  # 匹配来源任务
-                    current_task['source'] = line.strip('%').strip()
-                elif line.startswith('!'):  # 处理命令词行
-                    command_words = line.strip('!').strip().split()
-                    current_task['command_words'] = command_words
-                elif line.startswith('#'):  # 匹配关键词
-                    current_task['keywords'] = line[1:]  # 去除 '#'，但保留其余空格
-                elif line.startswith('add ='):  # 匹配额外关键词
-                    current_task['extra_keywords'] = line.split('=')[1].strip().replace('\\n', '\n')
-
-            # 确保任务有名称，才认为是有效任务
-            if current_task['job_title']:
+    for line in lines:
+        line = line.rstrip()
+        
+        if not line:  # 空行标志着新任务块的开始
+            if current_task.get('job_title'):
+                if orca_content:
+                    current_task['orca_block'] = '\n'.join(orca_content)
+                    orca_content = []
                 tasks.append(current_task)
+            current_task = {}
+            in_orca_block = False
+            continue
+            
+        if line.startswith('$'):  # 任务名称
+            current_task['job_title'] = line.strip('$').strip()
+            if line.startswith('$"') and line.endswith('"'):
+                current_task['quoted'] = True
+            else:
+                current_task['quoted'] = False
+        elif line == '-orca-':
+            in_orca_block = True
+            current_task['type'] = 'orca'
+        elif in_orca_block:
+            if line.startswith('%'):  # 在 ORCA 块中处理源任务
+                current_task['source'] = line.strip('%').strip()
+            orca_content.append(line)
+        else:
+            # 现有的 Gaussian 任务解析逻辑
+            if line.startswith('%smiles='):
+                current_task['smiles'] = line.split('=', 1)[1].strip()
+            elif line.startswith('%'):
+                current_task['source'] = line.strip('%').strip()
+            elif line.startswith('!'):
+                current_task['command_words'] = line.strip('!').strip().split()
+            elif line.startswith('#'):
+                current_task['keywords'] = line[1:]
+            elif line.startswith('add ='):
+                current_task['extra_keywords'] = line.split('=')[1].strip()
+
+    # 处理最后一个任务
+    if current_task.get('job_title'):
+        if orca_content:
+            current_task['orca_block'] = '\n'.join(orca_content)
+        tasks.append(current_task)
 
     return tasks
 
@@ -149,7 +169,7 @@ def update_task_title_with_quotes(task_file_path, task_info):
     updated_lines = []
     task_title = f'$"{task_info["job_title"]}"'  # 为任务标题加引号
 
-    # 正则模式，确保严格匹配任务块名
+    # 正则模���，确保严格匹配任务块名
     task_title_pattern = rf'^\${re.escape(task_info["job_title"])}$'
 
     for line in lines:
@@ -213,18 +233,16 @@ def process_redo(task_info, task_dir, original_file_name):
 
 def create_gjf_from_task(task_info, input_file, output_dir, log_data=None, geometry_data=None):
     """
-    Generate .gjf file(s) based on task information. Replace keywords, handle %chk line,
-    and expand keyword sets. If geometry_data is provided (e.g., from SMILES), use it.
+    Generate .gjf file(s) based on task information.
     """
     if not os.path.exists(output_dir):
         os.makedirs(output_dir)
     
     input_basename = os.path.basename(input_file)
-    
     logging.info(f"Processing {task_info['job_title']}")
 
     try:
-        # 如果提供了几何数据（如 SMILES 解析的结果），使用它
+        # 获取几何信息
         if geometry_data:
             geometry = geometry_data['geometry']
             charge = geometry_data['charge']
@@ -234,82 +252,57 @@ def create_gjf_from_task(task_info, input_file, output_dir, log_data=None, geome
             charge = log_data['charge']
             spin_multiplicity = log_data['spin_multiplicity']
         else:
-            # 如果没有提供几何数据或日志数据，从 input_file 中提取
-            gjf_data = extract_info_from_gfj(input_file)
-            geometry = gjf_data['coordinates']
-            charge = gjf_data['charge']
-            spin_multiplicity = gjf_data['spin_multiplicity']
-        
-        with open(input_file, 'r') as f:
-            file_content = f.readlines()
+            input_data = extract_info_from_input(input_file)
+            geometry = input_data['coordinates']
+            charge = input_data['charge']
+            spin_multiplicity = input_data['spin_multiplicity']
 
-        # Remove trailing empty lines
-        while file_content and file_content[-1].strip() == '':
-            file_content.pop()
-
-        # Expand keyword sets
+        # 展开关键词集
         expanded_keywords = expand_keyword_sets(task_info['keywords'])
         logging.info(f"Expanded keywords: {expanded_keywords}")
         
-        # Get set content for mapping keywords to file names
-        set_content = None
+        # 处理关键词映射
         if '{' in task_info['keywords']:
-            set_content = re.findall(r'\{([^}]+)\}', task_info['keywords'])[0]
-            options = [opt.strip() for opt in set_content.split(',')]
+            options = [opt.strip() for opt in re.findall(r'\{([^}]+)\}', task_info['keywords'])[0].split(',')]
         else:
             options = expanded_keywords
-        
-        # Map each expanded keyword to the corresponding set element, or skip if no braces are present
+
+        # 为每个展开的关键词生成文件
         for keyword, option in zip(expanded_keywords, options):
-            # 判断关键词是否包含花括号
-            if '{' in task_info['keywords']:
-                keyword_identifier = f"{option}_"  # Use the element from the set as the identifier
-            else:
-                keyword_identifier = ''  # 如果不包含花括号，忽略该部分
+            # 确定文件标识符
+            keyword_identifier = f"{option}_" if '{' in task_info['keywords'] else ''
 
-            # 生成 .gjf 和 .chk 文件的名称
-            output_gjf_name = f"{keyword_identifier}{task_info['job_title']}_{os.path.splitext(os.path.basename(input_file))[0]}.gjf"
-            output_gjf = os.path.join(output_dir, output_gjf_name)
-            new_chk_path = os.path.join(output_dir, f"{keyword_identifier}{task_info['job_title']}_{os.path.splitext(os.path.basename(input_file))[0]}.chk")
+            # 生成文件名
+            output_basename = f"{keyword_identifier}{task_info['job_title']}_{os.path.splitext(os.path.basename(input_file))[0]}"
+            output_gjf = os.path.join(output_dir, f"{output_basename}.gjf")
+            chk_path = os.path.join(output_dir, f"{output_basename}.chk")
             
-            logging.info(f"Generating file: {output_gjf_name}")
+            logging.info(f"Generating file: {os.path.basename(output_gjf)}")
             
-            file_lines_without_geometry = []
-            in_geometry_section = False
-            chk_line_present = False
-
-            for line in file_content:
-                if line.startswith("%chk"):
-                    chk_line_present = True
-                    file_lines_without_geometry.append(f"%chk={new_chk_path}\n")
-                elif line.startswith("#"):
-                    file_lines_without_geometry.append(f"#{keyword}\n")
-                elif re.match(r'^\s*\d+\s+\d+', line):
-                    file_lines_without_geometry.append(f"{charge} {spin_multiplicity}")
-                    in_geometry_section = True
-                elif in_geometry_section and line.strip() == '':
-                    in_geometry_section = False
-                elif not in_geometry_section:
-                    file_lines_without_geometry.append(line)
-
-            if not chk_line_present:
-                file_lines_without_geometry.insert(0, f"%chk={new_chk_path}\n")
-
-            with open(output_gjf, 'w') as f_out:
-                for line in file_lines_without_geometry:
-                    f_out.write(line)
+            # 写入 gjf 文件
+            with open(output_gjf, 'w') as f:
+                # 写入 Link 0 命令
+                f.write(f"%chk={chk_path}\n")
                 
-                # 如果有几何数据，则将几何信息写入
-                if geometry:
-                    f_out.write("\n")
-                    for geo_line in geometry:
-                        f_out.write(geo_line + "\n")
+                # 写入计算关键词
+                f.write(f"#{keyword}\n\n")
                 
-                # 如果有额外的关键字
+                # 写入标题
+                f.write(f"{task_info['job_title']}\n\n")
+                
+                # 写入电荷和自旋多重度
+                f.write(f"{charge} {spin_multiplicity}\n")
+                
+                # 写入几何坐标
+                for coord in geometry:
+                    f.write(f"{coord}\n")
+                
+                # 写入额外关键词（如果有）
                 if task_info['extra_keywords']:
-                    f_out.write(f"{task_info['extra_keywords']}\n")
+                    f.write(f"\n{task_info['extra_keywords']}")
                 
-                f_out.write("\n\n")
+                # 写入结束空行
+                f.write("\n\n")
             
             logging.info(f"Complete: {os.path.basename(output_gjf)} generated")
     
@@ -320,7 +313,6 @@ def create_gjf_from_task(task_info, input_file, output_dir, log_data=None, geome
 def process_task_folder(task_dir, output_base_dir):
     """
     Process each task folder, parse tasks and generate corresponding gjf files, and handle commands.
-    If a task block is already quoted, only execute commands without generating gjf files.
     """
     try:
         # Find .task files
@@ -336,85 +328,100 @@ def process_task_folder(task_dir, output_base_dir):
             logging.error(f"Failed to process task template in {task_file_path}")
             return
 
-        # Find .com or .gjf file with the same name as the .task file
-        com_file_path = task_file_path.replace(".task", ".com")
-        gjf_file_path = task_file_path.replace(".task", ".gjf")
+        # Parse .task file first to check if we need ORCA generator
+        tasks = parse_task_file(task_file_path)
+        
+        # 只在有 ORCA 任务时才创建生成器
+        orca_generator = None
+        if any(task.get('type') == 'orca' for task in tasks):
+            orca_generator = OrcaInputGenerator(ORCA_TEMPLATES_PATH)
 
-        # Prioritize .com file, use .gjf if .com doesn't exist
-        if os.path.exists(com_file_path):
-            input_file = com_file_path
-        elif os.path.exists(gjf_file_path):
-            input_file = gjf_file_path
-        else:
-            logging.info(f"No .com or .gjf files found for {task_file_path}")
+        # Find input file with the same base name as the .task file
+        task_base_name = os.path.splitext(task_files[0])[0]
+        possible_extensions = ['.com', '.gjf', '.xyz']
+        input_file = None
+        
+        # 按优先级顺序查找输入文件
+        for ext in possible_extensions:
+            possible_file = os.path.join(task_dir, task_base_name + ext)
+            if os.path.exists(possible_file):
+                input_file = possible_file
+                break
+
+        if not input_file:
+            logging.error(f"No input file (.com, .gjf, or .xyz) found for {task_file_path}")
             return
 
         # Get original file name (without path and extension)
-        original_file_name = os.path.basename(input_file).replace('.com', '').replace('.gjf', '')
-
-        # Parse .task file
-        tasks = parse_task_file(task_file_path)
+        original_file_name = os.path.splitext(os.path.basename(input_file))[0]
         
-        # Log the start of processing the .task file
         logging.info(f"Starting task: {os.path.basename(task_file_path)}")
         
-        # Process each task to generate new .gjf files or handle commands
         for task_info in tasks:
             task_output_dir = os.path.join(task_dir, task_info['job_title'])
 
-            # 如果任务块已经加引号，表示已经处理完，则跳过
-            if task_info['quoted']:
+            # 首先检查是否是已处理过的任务
+            if task_info.get('quoted', False):
                 logger.skip(f"{task_info['job_title']} already processed.")
                 continue
-                
-            # 优先处理 SMILES 字段，如果检测到 %smiles= 字段，直接处理几何生成
+
+            # 检查任务类型并分别处理
+            if task_info.get('type') == 'orca':
+                if orca_generator is None:
+                    orca_generator = OrcaInputGenerator(ORCA_TEMPLATES_PATH)
+                # ORCA 任务处理
+                orca_generator.generate_input(task_info, task_dir, task_output_dir)
+                update_task_title_with_quotes(task_file_path, task_info)
+                continue
+
+            # Gaussian 任务处理
             geometry_data = process_smiles_field(task_info, task_dir)
             if geometry_data:
-                # 如果有 SMILES 几何数据，将其传递给 create_gjf_from_task 并跳过日志检查
                 create_gjf_from_task(task_info, input_file, task_output_dir, geometry_data=geometry_data)
-                # 打引号，更新任务块
                 update_task_title_with_quotes(task_file_path, task_info)
                 logger.skip(f"{task_info['job_title']} is based on SMILES and does not need log file processing.")
-                continue  # SMILES 已处理，不需要后续处理
+                continue
 
             # 处理 %restart 的逻辑
             if task_info['source'] == "restart":
                 log_file = os.path.join(task_output_dir, f"{task_info['job_title']}_{original_file_name}.log")
                 if os.path.exists(log_file):
                     log_data = extract_final_optimized_coordinates_from_log(log_file)
-                    # 生成 .gjf 文件，使用日志中提取的几何数据
                     create_gjf_from_task(task_info, input_file, task_output_dir, log_data=log_data)
-                    # 在成功提取几何后，将原始文件移动到 fail 文件夹
                     process_redo(task_info, task_dir, original_file_name)
                 else:
                     logging.error(f"Log file {log_file} not found for restart.")
-                    continue  # Skip this task if log file doesn't exist
+                    continue
             
             # 处理依赖于其他任务的情况
             elif task_info['source'] != "origin":
-                prev_task_log = os.path.join(task_dir, task_info['source'], f"{task_info['source']}_{os.path.basename(input_file).replace('.gjf', '.log').replace('.com', '.log')}")
+                # 构建前一个任务的日志文件路径
+                prev_task_log = os.path.join(
+                    task_dir, 
+                    task_info['source'], 
+                    f"{task_info['source']}_{original_file_name}.log"
+                )
+
+                if not os.path.exists(prev_task_log):
+                    logger.skip(f"Previous task log file not found: {prev_task_log}")
+                    continue
 
                 if not check_log_file_for_normal_termination(prev_task_log):
                     logger.skip(f"{os.path.basename(prev_task_log)} unfinished.")
                     continue
 
-                # 从之前任务的日志文件中提取几何信息
                 log_data = extract_final_optimized_coordinates_from_log(prev_task_log)
                 create_gjf_from_task(task_info, input_file, task_output_dir, log_data=log_data)
             
-            # 如果任务来源是 origin（初始任务），使用原始几何信息
             else:
                 create_gjf_from_task(task_info, input_file, task_output_dir)
 
-            # 为成功生成 .gjf 文件的任务块加引号
             update_task_title_with_quotes(task_file_path, task_info)
 
-            # 处理命令
-            if task_info['command_words']:
+            if task_info('command_words'):
                 logging.info(f"Processing command words for task: {task_info['job_title']}")
                 parse_and_write_commands(task_info['command_words'], task_output_dir)
 
-        # Log completion of processing and add a blank line
         logging.info(f"Leaving task: {os.path.basename(task_file_path)}\n")
 
     except Exception as e:

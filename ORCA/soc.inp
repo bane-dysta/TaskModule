@@ -1,0 +1,21 @@
+! [func] [basis] tightSCF RIJCOSX
+
+%pal
+  nprocs [nproc]
+end
+
+%maxcore [mem]
+
+%tddft
+  nroots 5
+  dosoc true
+  printlevel 3
+end
+
+* xyzfile [charge] [spin] [xyz_file]
+
+-default-
+func=wb97x-d3
+basis=def2-svp
+nproc=32
+mem=3000
