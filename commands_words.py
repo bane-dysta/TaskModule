@@ -58,6 +58,29 @@ def parse_copy(content):
                 commands.append(f"cp -r {source} {target}/")
     return commands
 
+def parse_move(content):
+    """
+    处理 move=(source>target,...) 格式的命令。
+    source 可以是文件或目录，target 是目标路径。
+    支持通配符 * 匹配。
+    """
+    items = content.split(',')
+    commands = []
+    for item in items:
+        item = item.strip()
+        if '>' in item:
+            source, target = item.split('>')
+            source = source.strip()
+            target = target.strip()
+            
+            # 首先创建目标目录
+            commands.append(f"mkdir -p {target}")
+            
+            # 移动文件，确保目标路径以 / 结尾
+            target = target if target.endswith('/') else target + '/'
+            commands.append(f"mv {source} {target}")
+    return commands
+
 def default_handler(command):
     """默认处理器，直接返回原始命令。"""
     return [command]
@@ -67,6 +90,7 @@ COMMAND_DISPATCH = {
     "scripts": parse_scripts,
     "multiwfn": parse_multiwfn,
     "copy": parse_copy,
+    "move": parse_move,  # 添加新的 move 命令处理器
 }
 
 def handle_command(command):

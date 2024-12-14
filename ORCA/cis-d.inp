@@ -1,0 +1,28 @@
+! RHF [basis] [auxC] noautostart miniprint nopop CPCM
+%maxcore [mem]
+%pal nprocs [nproc] end
+%scf
+        Tole 1e-10
+        TolRMSP 1e-10
+        TolMaxP 1e-8
+end
+%cpcm
+smd true
+SMDsolvent "[solv]"
+end
+%cis
+dcorr 2
+Nroots 5
+MaxDim 20
+end
+* xyzfile [charge] [spin] [xyz_file]
+
+
+
+-default-
+basis=def2-tzvp 
+auxJ=def2/J 
+auxC=def2-TZVP/C 
+solv=ethanol
+nproc=24
+mem=8000

@@ -1,0 +1,8 @@
+%mem=192GB
+%nproc=64
+%chk=triplet.chk
+#n PBE1PBE/DEF2SVP td(triplet,root=2) force guess(read)
+
+Second State
+
+1 1

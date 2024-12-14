@@ -1,0 +1,25 @@
+! [Dfunc] [basis] [auxJ] [auxC] [ri] [SCF] noautostart miniprint nopop CPCM
+%maxcore  [mem]
+%pal nprocs [nproc] end
+%cpcm
+smd true
+SMDsolvent "[solv]"
+end
+%tddft
+nroots 5
+TDA false
+end
+* xyzfile [charge] [spin] [xyz_file]
+
+
+
+-default-
+func=DSD-PBEP86
+basis=def2-tzvp 
+auxJ=def2/J 
+auxC=def2-TZVP/C 
+ri=RIJCOSX 
+SCF=tightSCF 
+solv=ethanol
+nproc=40
+mem=4800
