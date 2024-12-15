@@ -169,7 +169,7 @@ def update_task_title_with_quotes(task_file_path, task_info):
     updated_lines = []
     task_title = f'$"{task_info["job_title"]}"'  # 为任务标题加引号
 
-    # 正则模���，确保严格匹配任务块名
+    # 正则，确保严格匹配任务块名
     task_title_pattern = rf'^\${re.escape(task_info["job_title"])}$'
 
     for line in lines:
@@ -437,9 +437,9 @@ def process_all_tasks(base_dir):
             process_task_folder(task_dir, task_dir)  # 任务的输出文件夹为当前目录下
 
 if __name__ == "__main__":
-    print("Starting the script...")
-    print(f"Processing tasks in directory: {TASKS_DIR}")
+    print("----Starting TASKER----")
+    print(f"Processing : {TASKS_DIR}")
     
     # 处理所有任务
     process_all_tasks(TASKS_DIR)
-    print("Script execution completed.")
+    print("----TASKER complete----")
