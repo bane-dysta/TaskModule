@@ -1,0 +1,8 @@
+%mem=192GB
+%nproc=64
+%chk=singlet.chk
+#n PBE1PBE/DEF2SVP td force guess(read)
+
+First State
+
+1 1

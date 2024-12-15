@@ -1,0 +1,30 @@
+! rhf STEOM-DLPNO-CCSD [basis] [auxJ] [auxC] [SCF] cpcm
+%maxcore [mem]
+%pal nprocs [nproc] end
+%cpcm
+smd true
+smdsolvent "[solv]"
+end
+%mdci
+nroots 3
+dotriplet true
+DoSolv true
+steomsoc true
+docosxeom true
+doaox3e true
+kcopt kc_aoblas
+DLPNOLINEAR true
+NEWDOMAINS true
+maxiter [iter]
+end
+
+* xyzfile [charge] [spin] [xyz_file]
+
+-default-
+basis=def2-tzvp(-f) 
+auxJ=def2/J 
+auxC=def2-TZVP/C 
+solv=ethanol
+nproc=24
+mem=8000
+

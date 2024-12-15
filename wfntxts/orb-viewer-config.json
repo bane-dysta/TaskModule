@@ -1,0 +1,83 @@
+{
+  "version": "1.0",
+  "timestamp": "2024-11-30T10:36:08.610615",
+  "viewers": [
+    {
+      "id": 0,
+      "title": "S1 电子空穴",
+      "color1": "#0000FF",
+      "color2": "#FF0000",
+      "isoValue": "0.001",
+      "surfaceScale": "1.0",
+      "showPositive": true,
+      "fileName1": "hole_00001.cub",
+      "fileName2": "electron_00001.cub"
+    },
+    {
+      "id": 1,
+      "title": "S2 电子空穴",
+      "color1": "#0000FF",
+      "color2": "#FF0000",
+      "isoValue": "0.001",
+      "surfaceScale": "1.0",
+      "showPositive": true,
+      "fileName1": "hole_00002.cub",
+      "fileName2": "electron_00002.cub"
+    },
+    {
+      "id": 2,
+      "title": "S3 电子空穴",
+      "color1": "#0000FF",
+      "color2": "#FF0000",
+      "isoValue": "0.001",
+      "surfaceScale": "1.0",
+      "showPositive": true,
+      "fileName1": "hole_00003.cub",
+      "fileName2": "electron_00003.cub"
+    },
+    {
+      "id": 3,
+      "title": "HOMO-1",
+      "color1": "#0000FF",
+      "color2": "#FF0000",
+      "isoValue": "0.02",
+      "surfaceScale": "1.0",
+      "showPositive": true,
+      "fileName1": "h-1.cub",
+      "fileName2": ""
+    },
+    {
+      "id": 4,
+      "title": "HOMO",
+      "color1": "#0000FF",
+      "color2": "#FF0000",
+      "isoValue": "0.02",
+      "surfaceScale": "1.0",
+      "showPositive": true,
+      "fileName1": "h.cub",
+      "fileName2": ""
+    },
+    {
+      "id": 5,
+      "title": "LUMO",
+      "color1": "#0000FF",
+      "color2": "#FF0000",
+      "isoValue": "0.02",
+      "surfaceScale": "1.0",
+      "showPositive": true,
+      "fileName1": "l.cub",
+      "fileName2": ""
+    },
+    {
+      "id": 6,
+      "title": "LUMO+1",
+      "color1": "#0000FF",
+      "color2": "#FF0000",
+      "isoValue": "0.02",
+      "surfaceScale": "1.0",
+      "showPositive": true,
+      "fileName1": "l+1.cub",
+      "fileName2": ""
+    }
+  ]
+}

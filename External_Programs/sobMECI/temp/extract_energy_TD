@@ -1,0 +1,5 @@
+{
+	if ($3 == "E(TD-HF/TD-DFT)") {
+		print $5
+	}
+}

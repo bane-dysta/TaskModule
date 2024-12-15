@@ -1,0 +1,8 @@
+%mem=192GB
+%nproc=64
+%chk=S0.chk
+#n MN15L/6-31g* force guess(read)
+
+First State
+
+1 1

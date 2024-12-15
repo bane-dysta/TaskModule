@@ -169,7 +169,7 @@ def update_task_title_with_quotes(task_file_path, task_info):
     updated_lines = []
     task_title = f'$"{task_info["job_title"]}"'  # 为任务标题加引号
 
-    # 正则模���，确保严格匹配任务块名
+    # 正则，确保严格匹配任务块名
     task_title_pattern = rf'^\${re.escape(task_info["job_title"])}$'
 
     for line in lines:
@@ -298,12 +298,12 @@ def create_gjf_from_task(task_info, input_file, output_dir, log_data=None, geome
                     f.write(f"{coord}\n")
                 
                 # 写入额外关键词（如果有）
-                if task_info['extra_keywords']:
+                if task_info.get('extra_keywords'):
                     f.write(f"\n{task_info['extra_keywords']}")
                 
                 # 写入结束空行
                 f.write("\n\n")
-            
+
             logging.info(f"Complete: {os.path.basename(output_gjf)} generated")
     
     except Exception as e:
@@ -418,7 +418,7 @@ def process_task_folder(task_dir, output_base_dir):
 
             update_task_title_with_quotes(task_file_path, task_info)
 
-            if task_info('command_words'):
+            if task_info.get('command_words'):
                 logging.info(f"Processing command words for task: {task_info['job_title']}")
                 parse_and_write_commands(task_info['command_words'], task_output_dir)
 
@@ -437,9 +437,9 @@ def process_all_tasks(base_dir):
             process_task_folder(task_dir, task_dir)  # 任务的输出文件夹为当前目录下
 
 if __name__ == "__main__":
-    print("Starting the script...")
-    print(f"Processing tasks in directory: {TASKS_DIR}")
+    print("----Starting TASKER----")
+    print(f"Processing : {TASKS_DIR}")
     
     # 处理所有任务
     process_all_tasks(TASKS_DIR)
-    print("Script execution completed.")
+    print("----TASKER complete----")

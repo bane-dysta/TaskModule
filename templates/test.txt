@@ -1,10 +1,10 @@
-$origin
+$origin-test
 %origin
 # sp test
 
 $smiles
 %smiles=C
-# sp test
+# opt
 
 $cas
 %smiles=50-00-0
@@ -16,7 +16,7 @@ $braces
 
 $comd
 %smiles
-! scripts=(fchk) multiwfn=(fmo>*.fchk,hole>*.fchk)  copy=(*.fchk>./..)
+! scripts=(fchk) multiwfn=(fmo>*.fchk,hole>*.fchk)  copy=(*.fchk>./fchk) move=(*.chk>./chk)
 # td
 
 
