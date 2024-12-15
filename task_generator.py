@@ -26,7 +26,7 @@ def find_template_file(template_name: str, template_path: Optional[str] = None) 
     template_dir = os.getenv('GAUSSIAN_TEMPLATE_DIR', '')
     if not template_dir:
         # 如果环境变量未设置，尝试使用默认路径
-        default_path = AUTOTASKER_TEMPLATES_PATH
+        default_path = os.getenv('AUTOTASKER_TEMPLATES_PATH')
         logging.debug(f"GAUSSIAN_TEMPLATE_DIR not set, trying default path: {default_path}")
         template_dir = default_path
     

@@ -1,41 +1,43 @@
 #!/bin/bash
 
-# 获取脚本所在目录的完整路径
-SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+# Add MRCC to PATH
+export PATH=$PATH:$HOME/apprepo/mrcc-2022
 
-# 定义元素周期表映射数组
-declare -A elements
-elements=(
+# Define periodic table mapping
+declare -A elements=(
     [1]="H"   [2]="He"  [3]="Li"  [4]="Be"  [5]="B"   [6]="C"   [7]="N"   [8]="O"   [9]="F"   [10]="Ne"
     [11]="Na" [12]="Mg" [13]="Al" [14]="Si" [15]="P"  [16]="S"  [17]="Cl" [18]="Ar" [19]="K"  [20]="Ca"
     [21]="Sc" [22]="Ti" [23]="V"  [24]="Cr" [25]="Mn" [26]="Fe" [27]="Co" [28]="Ni" [29]="Cu" [30]="Zn"
     [31]="Ga" [32]="Ge" [33]="As" [34]="Se" [35]="Br" [36]="Kr" [37]="Rb" [38]="Sr" [39]="Y"  [40]="Zr"
     [41]="Nb" [42]="Mo" [43]="Tc" [44]="Ru" [45]="Rh" [46]="Pd" [47]="Ag" [48]="Cd" [49]="In" [50]="Sn"
-    [51]="Sb" [52]="Te" [53]="I"  [54]="Xe" 
-    # 可以根据需要添加更多元素
+    [51]="Sb" [52]="Te" [53]="I"  [54]="Xe"
 )
 
-# 获取当前目录中的log文件
+# Get log file
 log_file=$(ls *.log 2>/dev/null | head -n 1)
 if [ -z "$log_file" ]; then
     echo "Error: No .log file found in current directory"
     exit 1
 fi
 
-# 创建optDFTw目录
-optdftw_dir="../optDFTw"
-mkdir -p "$optdftw_dir"
+# Get base name of log file (without extension)
+base_name=$(basename "$log_file" .log)
+xyz_file="${base_name}-mrcc.xyz"
 
-# 创建临时文件
+# Create output directory
+output_dir="../RS-PBEP86-SCS-ADC2"
+mkdir -p "$output_dir"
+
+# Create temporary files
 temp_file=$(mktemp)
 temp_coord_file=$(mktemp)
 
-# 提取电荷和自旋多重度
+# Extract charge and multiplicity
 charge_multi=$(grep "Charge =" "$log_file" | tail -n 1)
 charge=$(echo "$charge_multi" | awk '{print $3}')
 multiplicity=$(echo "$charge_multi" | awk '{print $6}')
 
-# 提取最后一个Standard orientation的坐标
+# Extract the last Standard orientation coordinates
 awk '
 /Standard orientation:/ {
     delete coords
@@ -52,7 +54,7 @@ END {
     }
 }' "$log_file" > "$temp_coord_file"
 
-# 如果没有找到Standard orientation，尝试Input orientation
+# If Standard orientation not found, try Input orientation
 if [ ! -s "$temp_coord_file" ]; then
     awk '
     /Input orientation:/ {
@@ -71,15 +73,17 @@ if [ ! -s "$temp_coord_file" ]; then
     }' "$log_file" > "$temp_coord_file"
 fi
 
-# 创建template.gjf文件
+# Count number of atoms
+num_atoms=$(wc -l < "$temp_coord_file")
+
+# Create XYZ file
 {
-    echo "#p LC-wPBE/TZVP"
-    echo ""
-    echo "Template for optDFTw"
-    echo ""
+    # First line: number of atoms
+    echo "$num_atoms"
+    # Second line: charge and multiplicity as comment
     echo "$charge $multiplicity"
     
-    # 处理坐标，将原子序数转换为元素符号
+    # Process coordinates and convert atomic numbers to element symbols
     while read -r line; do
         atomic_num=$(echo "$line" | awk '{print $1}')
         x=$(echo "$line" | awk '{print $2}')
@@ -88,26 +92,48 @@ fi
         element="${elements[$atomic_num]:-$atomic_num}"
         echo "$element $x $y $z"
     done < "$temp_coord_file"
-    
-    echo ""
-    echo ""
-} > "$optdftw_dir/template.gjf"
+} > "$xyz_file"
 
-# 创建comd文件
-cat > "$optdftw_dir/comd" << 'EOF'
-./optDFTw 0.01 0.1 0.05 0.0001 > optDFTw.out
+# Move XYZ file to output directory
+mv "$xyz_file" "$output_dir/"
+
+# Change to output directory
+cd "$output_dir" || exit 1
+
+# Run genmrcc.sh
+$HOME/apprepo/mrcc-2022/genmrcc.sh -m 96GB -n 32 -p tddft -d RS-PBE-P86 -D "scs-adc(2)" -b def2-TZVP -S 4 -T 3 "$xyz_file"
+
+# Change to calculation directory
+calc_dir="${base_name}-mrcc_RS-PBE-P86_TD_scsadc2"
+cd "$calc_dir" || exit 1
+
+# Update charge and multiplicity in MINP file
+sed -i "s/charge=.*/charge=$charge/" MINP
+sed -i "s/mult=.*/mult=$multiplicity/" MINP
+
+# Return to parent directory
+cd ..
+
+# Get available SLURM partitions
+partitions=$(sinfo -h -o "%R" | head -n 1)
+
+# Create SLURM submission script
+cat > mrcc.slurm << EOF
+#!/bin/bash
+#SBATCH -J RS-PBE-P86
+#SBATCH --ntasks-per-node=32
+#SBATCH -N 1
+#SBATCH --mem=110000M
+#SBATCH -p $partitions
+
+# Set environment
+export PATH=\$PATH:\$HOME/apprepo/mrcc-2022
+
+# Run MRCC
+bash ${base_name}-mrcc_RS-PBE-P86_TD_scsadc2/runmrcc.sh
 EOF
 
-# 复制所需文件
-if [ -d "$(dirname $SCRIPT_DIR)/External_Programs/optDFTw" ]; then
-    cp -r "$(dirname $SCRIPT_DIR)/External_Programs/optDFTw"/* "$optdftw_dir/"
-    echo "Successfully copied optDFTw files"
-else
-    echo "Error: optDFTw source directory not found"
-    exit 1
-fi
+echo "Setup completed successfully"
 
-# 清理临时文件
+# Clean up temporary files
 rm -f "$temp_file" "$temp_coord_file"
-
-echo "optDFTw setup completed successfully"

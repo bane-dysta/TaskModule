@@ -77,7 +77,6 @@ $td
 命令词由commands_words.py解析，并将bash命令写入名为comd的文件内。slurms.sh提交任务时会识别该comd文件，将其中内容复制到slurm脚本中，以实现自动化后处理。目前支持以下命令类型：
 
 #### scripts命令
-
 ```
 scripts=(fchk,esp)
 ```
@@ -94,15 +93,18 @@ multiwfn=(output.fchk>hole,output.log>uvvis)
 - 支持通配符。
 - multiwfn的输出将被重定向到`mw_{template}_out.txt`。
 
-#### copy命令
+#### copy和move命令
 
 ```
 copy=(*.log>../logs/,*.fchk>../analysis/)
+move=(*.log>../logs/,*.fchk>../analysis/)
 ```
-
-该命令词会请求一条将对应文件复制到指定目录的bash命令，可以结合Orbital_Viewer对cub文件进行快速可视化。
+该命令词会请求一条将对应文件复制或移动到指定目录的bash命令，用来整理计算文件。
 - 支持通配符
 - 自动创建目标目录
+
+## 外部程序
+External_Programs目录下挂载了sobereva老师的[optDFTw](http://bbs.keinsci.com/forum.php?mod=viewthread&tid=4100&fromuid=63020)和[sobMECP](http://bbs.keinsci.com/forum.php?mod=viewthread&tid=865&fromuid=63020)(sobMECI是sobMECP的魔改版)，可以通过scripts命令进行调用。如果您使用这两个程序计算并用于发表，还需要按照sobereva老师的要求进行引用。
 
 ## 🔰开发计划
 

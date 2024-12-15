@@ -12,4 +12,4 @@ awk '
 }
 END {  # 在文件结束时打印最后一组坐标
     for(i=1; i<=count; i++) print coords[i]
-}' *.log
+}' name.log

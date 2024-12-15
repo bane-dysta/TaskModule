@@ -58,7 +58,7 @@ def run_slurms():
     运行 slurms 命令
     """
     try:
-        subprocess.run(["bash", "slurms"], check=True)
+        subprocess.run(["slurms"], check=True)
         print("Successfully ran 'slurms' command")
     except subprocess.CalledProcessError as e:
         print(f"Error running 'slurms' command: {e}")

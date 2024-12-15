@@ -298,12 +298,12 @@ def create_gjf_from_task(task_info, input_file, output_dir, log_data=None, geome
                     f.write(f"{coord}\n")
                 
                 # 写入额外关键词（如果有）
-                if task_info['extra_keywords']:
+                if task_info.get('extra_keywords'):
                     f.write(f"\n{task_info['extra_keywords']}")
                 
                 # 写入结束空行
                 f.write("\n\n")
-            
+
             logging.info(f"Complete: {os.path.basename(output_gjf)} generated")
     
     except Exception as e:
@@ -418,7 +418,7 @@ def process_task_folder(task_dir, output_base_dir):
 
             update_task_title_with_quotes(task_file_path, task_info)
 
-            if task_info('command_words'):
+            if task_info.get('command_words'):
                 logging.info(f"Processing command words for task: {task_info['job_title']}")
                 parse_and_write_commands(task_info['command_words'], task_output_dir)
 

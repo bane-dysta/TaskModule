@@ -4,7 +4,7 @@ $origin-test
 
 $smiles
 %smiles=C
-# sp test
+# opt
 
 $cas
 %smiles=50-00-0

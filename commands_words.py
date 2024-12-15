@@ -1,5 +1,8 @@
 import os
-from config import AUTOTASKER_WFN_PATH, AUTOTASKER_SCRIPTS_PATH
+
+# 从环境变量获取路径
+AUTOTASKER_WFN_PATH = os.getenv('AUTOTASKER_WFN_PATH')
+AUTOTASKER_SCRIPTS_PATH = os.getenv('AUTOTASKER_SCRIPTS_PATH')
 
 def parse_scripts(content):
     """处理 scripts=(a,b,c,...) 格式的命令。"""

@@ -21,8 +21,8 @@ mkdir -p "$target_dir"
 
 # 如果目录是新创建的或为空，则复制sobMECI文件
 if [ -z "$(ls -A "$target_dir")" ]; then
-    if [ -d "$(dirname $SCRIPT_DIR)/sobMECI" ]; then
-        cp -r "$(dirname $SCRIPT_DIR)/sobMECI"/* "$target_dir/"
+    if [ -d "$(dirname $SCRIPT_DIR)/External_Programs/sobMECI" ]; then
+        cp -r "$(dirname $SCRIPT_DIR)/External_Programs/sobMECI"/* "$target_dir/"
         echo "Copied sobMECI files to $target_dir"
     else
         echo "Error: sobMECI source directory not found"

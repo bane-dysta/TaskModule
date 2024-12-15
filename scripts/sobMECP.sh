@@ -21,8 +21,8 @@ mkdir -p "$target_dir"
 
 # 如果目录是新创建的或为空，则复制sobMECP文件
 if [ -z "$(ls -A "$target_dir")" ]; then
-    if [ -d "$(dirname $SCRIPT_DIR)/sobMECP" ]; then
-        cp -r "$(dirname $SCRIPT_DIR)/sobMECP"/* "$target_dir/"
+    if [ -d "$(dirname $SCRIPT_DIR)/External_Programs/sobMECP" ]; then
+        cp -r "$(dirname $SCRIPT_DIR)/External_Programs/sobMECP"/* "$target_dir/"
         echo "Copied sobMECP files to $target_dir"
     else
         echo "Error: sobMECP source directory not found"
