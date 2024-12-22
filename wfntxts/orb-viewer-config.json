@@ -8,10 +8,12 @@
       "color1": "#0000FF",
       "color2": "#FF0000",
       "isoValue": "0.001",
-      "surfaceScale": "1.0",
       "showPositive": true,
       "fileName1": "hole_00001.cub",
-      "fileName2": "electron_00001.cub"
+      "fileName2": "electron_00001.cub",
+      "notes": {
+        "notes": "λ = [wavelength_S1] nm\nf = [f1]\nTransOrbit:[TO1]"
+      }
     },
     {
       "id": 1,
@@ -19,10 +21,12 @@
       "color1": "#0000FF",
       "color2": "#FF0000",
       "isoValue": "0.001",
-      "surfaceScale": "1.0",
       "showPositive": true,
       "fileName1": "hole_00002.cub",
-      "fileName2": "electron_00002.cub"
+      "fileName2": "electron_00002.cub",
+      "notes": {
+        "notes": "λ = [wavelength_S2] nm\nf = [f2]\nTransOrbit:[TO2]"
+      }
     },
     {
       "id": 2,
@@ -30,10 +34,12 @@
       "color1": "#0000FF",
       "color2": "#FF0000",
       "isoValue": "0.001",
-      "surfaceScale": "1.0",
       "showPositive": true,
       "fileName1": "hole_00003.cub",
-      "fileName2": "electron_00003.cub"
+      "fileName2": "electron_00003.cub",
+      "notes": {
+        "notes": "λ = [wavelength_S3] nm\nf = [f3]\nTransOrbit:[TO3]"
+      }
     },
     {
       "id": 3,
@@ -41,10 +47,12 @@
       "color1": "#0000FF",
       "color2": "#FF0000",
       "isoValue": "0.02",
-      "surfaceScale": "1.0",
       "showPositive": true,
       "fileName1": "h-1.cub",
-      "fileName2": ""
+      "fileName2": "",
+      "notes": {
+        "notes": "[NUMHOMO-1] [HOMO-1]eV"
+      }
     },
     {
       "id": 4,
@@ -52,10 +60,12 @@
       "color1": "#0000FF",
       "color2": "#FF0000",
       "isoValue": "0.02",
-      "surfaceScale": "1.0",
       "showPositive": true,
       "fileName1": "h.cub",
-      "fileName2": ""
+      "fileName2": "",
+      "notes": {
+        "notes": "[NUMHOMO] [HOMO]eV"
+      }
     },
     {
       "id": 5,
@@ -63,10 +73,12 @@
       "color1": "#0000FF",
       "color2": "#FF0000",
       "isoValue": "0.02",
-      "surfaceScale": "1.0",
       "showPositive": true,
       "fileName1": "l.cub",
-      "fileName2": ""
+      "fileName2": "",
+      "notes": {
+        "notes": "[NUMLUMO] [LUMO]eV"
+      }
     },
     {
       "id": 6,
@@ -74,10 +86,12 @@
       "color1": "#0000FF",
       "color2": "#FF0000",
       "isoValue": "0.02",
-      "surfaceScale": "1.0",
       "showPositive": true,
       "fileName1": "l+1.cub",
-      "fileName2": ""
+      "fileName2": "",
+      "notes": {
+        "notes": "[NUMLUMO+1] [LUMO+1]eV"
+      }
     }
   ]
 }
