@@ -20,15 +20,22 @@ fi
 # 初始化一个空的数组来存储未处理的文件
 input_files=()
 
-# 递归搜索所有.gjf文件
+# 递归搜索所有.gjf和.inp文件
 while IFS= read -r file; do
-    log_file="${file%.gjf}.log"  # 构建对应的.log文件名
-    base_name=$(basename "$file")  # 获取文件的基本名（不含路径）
-    
-    if [ ! -f "$log_file" ] && [ "$base_name" != "template.gjf" ]; then  # 检查.log文件是否存在且文件名不是template.gjf
-        input_files+=("$file")  # 如果条件满足，添加到数组
+    if [[ "$file" == *.gjf ]]; then
+        log_file="${file%.gjf}.log"
+        base_name=$(basename "$file")
+        if [ ! -f "$log_file" ] && [ "$base_name" != "template.gjf" ]; then
+            input_files+=("$file")
+        fi
+    elif [[ "$file" == *.inp ]]; then
+        log_file="${file%.inp}.log"
+        base_name=$(basename "$file")
+        if [ ! -f "$log_file" ] && [ "$base_name" != "template.inp" ]; then
+            input_files+=("$file")
+        fi
     fi
-done < <(find "$input_folder" -type f -name "*.gjf")
+done < <(find "$input_folder" -type f \( -name "*.gjf" -o -name "*.inp" \))
 
 # 获取当前用户的所有作业
 current_jobs=$(squeue -u $USER -o "%.18i %.100j" | awk '{print $2}' | grep -o '^[^[:space:]]*')
@@ -37,6 +44,7 @@ current_jobs=$(squeue -u $USER -o "%.18i %.100j" | awk '{print $2}' | grep -o '^
 queue_filtered_files=()
 for file in "${input_files[@]}"; do
     base_name=$(basename "$file" .gjf)
+    base_name=${base_name%.inp}  # 移除.inp后缀(如果存在)
     if ! grep -q "$base_name" <<< "$current_jobs"; then
         queue_filtered_files+=("$file")
     fi
@@ -62,11 +70,12 @@ mkdir -p "$HOME/.sub"
 # 提交作业的函数
 submit_job() {
     local input_file="$1"
-    local input_dir=$(dirname "$input_file")  # 提取文件所在的目录
-    local log_file="${input_file%.gjf}.log"
-    local file_name=$(basename "$input_file" .gjf)
-    local chk_file="${input_file%.gjf}.chk"  # 与输入文件和log文件相同的目录
-    local comd_file="$input_dir/comd"  # comd文件路径
+    local input_dir=$(dirname "$input_file")
+    local file_extension="${input_file##*.}"
+    local file_name=$(basename "$input_file" ".$file_extension")
+    local log_file="${input_file%.*}.log"
+    local job_script="${input_file%.*}.sh"
+    local comd_file="$input_dir/comd"
 
     # 切换到文件所在的目录
     if cd "$input_dir"; then
@@ -76,25 +85,47 @@ submit_job() {
         return 1
     fi
 
-    # 修改chk路径
-    if grep -q "%chk" "$input_file"; then
-        sed -i "s|%chk=.*|%chk=${chk_file}|" "$input_file"
-    fi
+    # 根据文件类型创建不同的作业脚本
+    if [ "$file_extension" = "gjf" ]; then
+        # Gaussian作业
+        local chk_file="${input_file%.gjf}.chk"
+        
+        # 修改chk路径
+        if grep -q "%chk" "$input_file"; then
+            sed -i "s|%chk=.*|%chk=${chk_file}|" "$input_file"
+        fi
 
-    local job_script="${input_file%.gjf}.sh"
-    
-    # 创建基本的作业脚本
-    cat > "$job_script" <<EOF
+        cat > "$job_script" <<EOF
 #!/bin/bash
 #SBATCH -J ${file_name}
 #SBATCH --ntasks=32
 #SBATCH -N 1
 #SBATCH --mem=100000M  
 #SBATCH -p $partition_name
-source $HOME/apprepo/gaussian/16-hy/scripts/env.sh  # 确保这条路径是正确的
+source $HOME/apprepo/gaussian/16-hy/scripts/env.sh
 export PGI_FASTMATH_CPU=sandybridge
 g16 "$input_file" > "$log_file"
 EOF
+
+    elif [ "$file_extension" = "inp" ]; then
+        # ORCA作业
+        cat > "$job_script" <<EOF
+#!/bin/bash
+#SBATCH -J ${file_name}
+#SBATCH --ntasks-per-node=32
+#SBATCH -N 1
+#SBATCH --mem=100000M
+#SBATCH -p $partition_name
+
+module purge
+source "$HOME/apprepo/orca/6.0.1-openmpi416_gcc930/scripts/env.sh"
+export UCX_IB_ADDR_TYPE=ib_global
+export OMPI_MCA_btl_openib_allow_ib=1
+export OMPI_MCA_btl_openib_warn_default_gid_prefix=0
+
+$HOME/apprepo/orca/6.0.1-openmpi416_gcc930/app/orca "$input_file" > "$log_file"
+EOF
+    fi
 
     # 检查是否存在comd文件，如果存在则添加到作业脚本末尾
     if [ -f "$comd_file" ]; then
@@ -112,13 +143,13 @@ EOF
     echo "$(date '+%Y-%m-%d %H:%M:%S') - Job $job_id: $input_file" >> "$HOME/.sub/submit.log"
     
     # 切换回到原来的路径
-    cd - >/dev/null  # 切换回之前的目录，隐藏cd的输出
+    cd - >/dev/null
 }
 
 # 主逻辑，维持至少10个作业
 current_jobs=$(squeue -u $USER | wc -l)
 jobs_needed=20
-jobs_to_submit=$((jobs_needed - current_jobs + 1)) # 加1是因为squeue输出包含了标题行
+jobs_to_submit=$((jobs_needed - current_jobs + 1))
 
 echo "Current jobs in queue: $current_jobs. Need to submit $jobs_to_submit additional jobs."
 
@@ -129,7 +160,7 @@ for i in $(seq 0 $((jobs_to_submit - 1))); do
         break
     fi
     submit_job "${queue_filtered_files[$i]}"
-    queue_filtered_files=("${queue_filtered_files[@]:1}") # 移除已提交的文件
+    queue_filtered_files=("${queue_filtered_files[@]:1}")
 done
 
 echo "Submission process completed."

@@ -7,14 +7,16 @@ SMDsolvent "[solv]"
 end
 %tddft
 nroots 5
-TDA false
+TDA [tda]
+triplets  [triplets]
+CPCMEQ [eqsolv]
 end
 * xyzfile [charge] [spin] [xyz_file]
 
 
 
 -default-
-func=DSD-PBEP86
+Dfunc=DSD-PBEP86
 basis=def2-tzvp 
 auxJ=def2/J 
 auxC=def2-TZVP/C 
@@ -23,3 +25,6 @@ SCF=tightSCF
 solv=ethanol
 nproc=40
 mem=4800
+eqsolv=true
+tda=false
+triplets=false

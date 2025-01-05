@@ -11,6 +11,8 @@ smd true
 SMDsolvent "[solv]"
 end
 %cis
+triplets  [triplets]
+CPCMEQ [eqsolv]
 dcorr 2
 Nroots 5
 MaxDim 20
@@ -26,3 +28,6 @@ auxC=def2-TZVP/C
 solv=ethanol
 nproc=24
 mem=8000
+eqsolv=true
+tda=false
+triplets=false

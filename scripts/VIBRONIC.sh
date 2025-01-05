@@ -9,8 +9,8 @@ for logfile in *.log; do
         # Check if basename starts with "td"
         if [[ $basename == td* ]]; then
             # Create initial and final filenames
-            initial_file="${basename}.fchk"
-            final_file="opt${basename:2}.fchk"
+            initial_file="${basename}.chk"
+            final_file="opt${basename:2}.chk"
             
             # Create Huang-Rhys.gjf in ../FCclasses directory
             mkdir -p ../FCclasses
@@ -19,6 +19,7 @@ for logfile in *.log; do
             cat > Huang-Rhys.gjf << EOF
 %oldchk=${final_file}
 #p geom=allcheck freq(readfc,fcht,readfcht)
+
 initial=source=chk final=source=chk spectroscopy=onephotonemission
 print=(huangrhys,matrix=JK)
 

@@ -72,8 +72,14 @@ if [ -n "$log_file" ]; then
             awk -v state="Excited State   $state_num:" '
             $0 ~ state {p=1; next}
             /^$/ || /Excited State/ {p=0}
-            p && / -> / {
-                orbit = $1 "->" $3 "(" $4 ")"
+            p && /->/ {
+                # Handle format "113 ->114         0.70168"
+                from_orbital = $1
+                to_orbital = $2
+                sub("->", "", to_orbital)  # Remove -> from the second field
+                coefficient = $3
+                
+                orbit = from_orbital "->" to_orbital "(" coefficient ")"
                 if (NR == 1) {
                     printf "%s", orbit
                 } else {
