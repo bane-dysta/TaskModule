@@ -15,8 +15,8 @@ export AUTOTASKER_SCRIPTS_PATH="$AUTOTASKER_BASE_PATH/scripts"
 
 export tasker="$AUTOTASKER_BASE_PATH"
 
-# 定义tast命令函数
-tast() {
+# 定义tasker命令函数
+tasker() {
     case "$1" in
         --run|-r)
             python "$AUTOTASKER_BASE_PATH/case/test_calc.py"
@@ -27,15 +27,24 @@ tast() {
         --comd|-c)
             python "$AUTOTASKER_BASE_PATH/case/test_comd.py"
             ;;
-        *)
-            echo "Usage: tast [OPTION]"
+        --task|-t)
+            python "$AUTOTASKER_BASE_PATH/task_module.py"
+            ;;
+
+        --help|-h)
+            echo "Usage: tasker [OPTION]"
             echo "Options:"
-            echo "  --run, -r     Run test calculation"
-            echo "  --build, -b   Run smiles build test"
-            echo "  --comd, -c    Run command test"
+            echo "  --run, -r              Run test calculation"
+            echo "  --build, -b            Run smiles build test"
+            echo "  --comd, -c             Run command test"
+            echo "  --task, -t <task_dir>  Process tasks in specified directory"
+            echo "  --help, -h             Show this help message"
+            ;;
+        *)
+            tasker --help
             ;;
     esac
 }
 
-# 将tast函数导出为命令
-export -f tast
+# 将tasker函数导出为命令
+export -f tasker

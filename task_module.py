@@ -94,6 +94,9 @@ def parse_task_file(task_file):
                 if orca_content:
                     current_task['orca_block'] = '\n'.join(orca_content)
                     orca_content = []
+                # 确保每个任务都有source字段
+                if 'source' not in current_task:
+                    current_task['source'] = 'origin'
                 tasks.append(current_task)
             current_task = {}
             in_orca_block = False
@@ -116,6 +119,9 @@ def parse_task_file(task_file):
             # 现有的 Gaussian 任务解析逻辑
             if line.startswith('%smiles='):
                 current_task['smiles'] = line.split('=', 1)[1].strip()
+            elif line.startswith('%file='):
+                current_task['file'] = line.split('=', 1)[1].strip()
+                current_task['source'] = 'origin'  # 为%file设置默认source
             elif line.startswith('%'):
                 current_task['source'] = line.strip('%').strip()
             elif line.startswith('!'):
@@ -129,6 +135,9 @@ def parse_task_file(task_file):
     if current_task.get('job_title'):
         if orca_content:
             current_task['orca_block'] = '\n'.join(orca_content)
+        # 确保最后一个任务也有source字段
+        if 'source' not in current_task:
+            current_task['source'] = 'origin'
         tasks.append(current_task)
 
     return tasks
@@ -231,6 +240,67 @@ def process_redo(task_info, task_dir, original_file_name):
     return True
 
 
+def process_file_field(task_info, task_dir):
+    """
+    处理task_info中的%file字段，从指定文件读取几何结构信息。
+    支持xyz、gjf、log等格式。
+    支持绝对路径和相对路径。
+    
+    Args:
+        task_info: 任务信息字典
+        task_dir: 任务目录路径
+        
+    Returns:
+        dict: 包含geometry、charge和spin_multiplicity的字典，如果处理失败返回None
+    """
+    if 'file' not in task_info:
+        return None
+        
+    file_path = task_info['file'].strip()
+    
+    # 统一路径分隔符
+    file_path = file_path.replace('\\', '/')
+    
+    # 处理路径
+    try:
+        if os.path.isabs(file_path):
+            # 对于Windows系统,确保盘符存在
+            if os.name == 'nt' and len(file_path) > 1 and file_path[1] == ':':
+                drive = file_path[0].upper()
+                if not os.path.exists(f"{drive}:/"):
+                    logging.error(f"Drive {drive}: does not exist")
+                    return None
+        else:
+            # 相对路径处理
+            file_path = os.path.abspath(os.path.join(task_dir, file_path))
+            
+        # 规范化路径
+        file_path = os.path.normpath(file_path)
+        
+        if not os.path.exists(file_path):
+            logging.error(f"File not found: {file_path}")
+            return None
+            
+        # 根据文件扩展名选择处理方法
+        ext = os.path.splitext(file_path)[1].lower()
+        try:
+            if ext == '.log':
+                return extract_final_optimized_coordinates_from_log(file_path)
+            elif ext in ['.gjf', '.com']:
+                return extract_info_from_input(file_path)
+            elif ext == '.xyz':
+                return extract_info_from_input(file_path)
+            else:
+                logging.error(f"Unsupported file format: {ext}")
+                return None
+        except Exception as e:
+            logging.error(f"Error processing file {file_path}: {str(e)}")
+            return None
+            
+    except Exception as e:
+        logging.error(f"Error handling file path {file_path}: {str(e)}")
+        return None
+
 def create_gjf_from_task(task_info, input_file, output_dir, log_data=None, geometry_data=None):
     """
     Generate .gjf file(s) based on task information.
@@ -252,10 +322,17 @@ def create_gjf_from_task(task_info, input_file, output_dir, log_data=None, geome
             charge = log_data['charge']
             spin_multiplicity = log_data['spin_multiplicity']
         else:
-            input_data = extract_info_from_input(input_file)
-            geometry = input_data['coordinates']
-            charge = input_data['charge']
-            spin_multiplicity = input_data['spin_multiplicity']
+            # 尝试从file字段读取
+            file_data = process_file_field(task_info, os.path.dirname(input_file))
+            if file_data:
+                geometry = file_data['coordinates']
+                charge = file_data['charge']
+                spin_multiplicity = file_data['spin_multiplicity']
+            else:
+                input_data = extract_info_from_input(input_file)
+                geometry = input_data['coordinates']
+                charge = input_data['charge']
+                spin_multiplicity = input_data['spin_multiplicity']
 
         # 展开关键词集
         expanded_keywords = expand_keyword_sets(task_info['keywords'])

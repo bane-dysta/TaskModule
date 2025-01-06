@@ -10,6 +10,10 @@ $cas
 %smiles=50-00-0
 # sp test
 
+$file
+%file=cas/cas_methane.gjf
+# guess=only
+
 $braces
 %smiles
 # {sp,test}
