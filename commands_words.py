@@ -5,42 +5,88 @@ AUTOTASKER_WFN_PATH = os.getenv('AUTOTASKER_WFN_PATH')
 AUTOTASKER_SCRIPTS_PATH = os.getenv('AUTOTASKER_SCRIPTS_PATH')
 
 def parse_scripts(content):
-    """处理 scripts=(a,b,c,...) 格式的命令。"""
-    script_items = content.split(',')
+    """处理 scripts=(script[,args]|script[,args]|...) 格式的命令。
+    
+    例如：
+    scripts=(fchk|VIBRONIC,1,2|ESP,arg1)
+    会生成命令：
+    bash $tasker_scripts/fchk.sh
+    bash $tasker_scripts/VIBRONIC.sh 1 2
+    bash $tasker_scripts/ESP.sh arg1
+    """
+    script_items = content.split('|')
     commands = []
     for item in script_items:
         item = item.strip()
-        if item:
-            commands.append(f"bash $tasker_scripts/{item}.sh")
+        if not item:
+            continue
+            
+        # 分割脚本名和参数
+        parts = item.split(',')
+        script_name = parts[0].strip()
+        args = [arg.strip() for arg in parts[1:]]  # 获取额外参数
+        
+        # 构建基本命令
+        base_cmd = f"bash $tasker_scripts/{script_name}.sh"
+        
+        # 如果有参数，添加到命令中
+        if args:
+            args_str = ' '.join(args)
+            base_cmd = f"{base_cmd} {args_str}"
+            
+        commands.append(base_cmd)
     return commands
 
 def parse_multiwfn(content):
-    """处理 multiwfn=(input>template,...) 格式的命令。
-    例如：multiwfn=(output.wfn>ESP,output.fchk>BOND)
-    会生成命令：multiwfn ./output.wfn < $wfn_examples/ESP.txt
+    """处理 multiwfn=(input>template[,args]|input>template[,args],...) 格式的命令。
+    例如：
+    multiwfn=(output.wfn>ESP|output.fchk>IFCT,1-42,43-84|1.log>uv)
+    会生成命令：
+    multiwfn ./output.wfn < $wfn_examples/ESP.txt
+    multiwfn ./output.fchk < $wfn_examples/IFCT.txt 1-42 43-84
+    multiwfn ./1.log < $wfn_examples/uv.txt
     """
-    items = content.split(',')
+    items = content.split('|')
     commands = []
     for item in items:
         item = item.strip()
-        if '>' in item:
-            template, input_file = item.split('>')
+        if not item:
+            continue
+            
+        # 分割命令和参数
+        parts = item.split(',')
+        main_command = parts[0].strip()
+        args = [arg.strip() for arg in parts[1:]]  # 获取额外参数
+        
+        if '>' in main_command:
+            input_file, template = main_command.split('>')
             input_file = input_file.strip()
             template = template.strip()
-            # 生成 multiwfn 的命令
-            commands.append(f"Multiwfn ./{input_file} < $wfn_examples/{template}.txt > mw_{template}_out.txt")
+            
+            # 构建基本命令
+            base_cmd = f"Multiwfn ./{input_file} < $wfn_examples/{template}.txt"
+            
+            # 如果有额外参数，添加到命令中
+            if args:
+                args_str = ' '.join(args)
+                base_cmd = f"{base_cmd} {args_str}"
+            
+            # 添加输出重定向
+            base_cmd = f"{base_cmd} > mw_{template}_out.txt"
+            commands.append(base_cmd)
+            
     return commands
 
 def parse_copy(content):
     """
-    处理 copy=(source>target,...) 格式的命令。
+    处理 copy=(source>target|source>target,...) 格式的命令。
     source 可以是文件或目录，target 是目标路径。
     支持通配符 * 匹配。
     
     示例：
-    copy=(output.log>../logs/,*.wfn>../wfn_files/)
+    copy=(output.log>../logs|*.wfn>../wfn_files)
     """
-    items = content.split(',')
+    items = content.split('|')
     commands = []
     for item in items:
         item = item.strip()
@@ -63,11 +109,11 @@ def parse_copy(content):
 
 def parse_move(content):
     """
-    处理 move=(source>target,...) 格式的命令。
+    处理 move=(source>target|source>target,...) 格式的命令。
     source 可以是文件或目录，target 是目标路径。
     支持通配符 * 匹配。
     """
-    items = content.split(',')
+    items = content.split('|')
     commands = []
     for item in items:
         item = item.strip()
@@ -130,3 +176,4 @@ def parse_and_write_commands(commands, output_dir):
 
     except Exception as e:
         print(f"Failed to write commands: {e}")
+        

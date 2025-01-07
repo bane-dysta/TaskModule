@@ -157,13 +157,18 @@ git clone git@github.com:bane-dysta/TaskModule.git
 ## 🔰开发计划
 
 - [x] 支持生成ORCA输入文件
-- [ ] 支持以指定目录文件为结构资源
-- [ ] 支持Gaussian的log文件为结构资源
+- [x] 支持以指定目录文件为结构资源
+- [x] 支持Gaussian的log文件为结构资源
 - [x] 支持xyz格式文件为结构资源
 - [ ] 支持判断震荡情况
 - [ ] 与mail模块结合实时监控任务状况
 
+
 ## 📋 更新日志
+
+### v1.0.3
+- 支持以指定目录文件为结构资源
+- 支持Gaussian的log文件为结构资源
 
 ### v1.0.2
 - scripts命令集更新，可以调用sobMECP、optDFTw、MRCC等程序了。

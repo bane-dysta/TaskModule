@@ -19,26 +19,32 @@ export tasker="$AUTOTASKER_BASE_PATH"
 tasker() {
     case "$1" in
         --run|-r)
-            python "$AUTOTASKER_BASE_PATH/case/test_calc.py"
+            python "$AUTOTASKER_BASE_PATH/task_module.py"
             ;;
-        --build|-b)
+        --smiles|-s)
             python "$AUTOTASKER_BASE_PATH/case/test_SmilesBuild.py"
             ;;
         --comd|-c)
-            python "$AUTOTASKER_BASE_PATH/case/test_comd.py"
+            python "$AUTOTASKER_BASE_PATH/case/test_comd.py" "$2"
             ;;
-        --task|-t)
-            python "$AUTOTASKER_BASE_PATH/task_module.py"
+        --test|-t)
+            python "$AUTOTASKER_BASE_PATH/case/test_calc.py"
             ;;
-
+        --all-comd|-ac)
+            python "$AUTOTASKER_BASE_PATH/case/all_comd.py"
+            ;;
         --help|-h)
-            echo "Usage: tasker [OPTION]"
+            echo "Usage: tasker [OPTION] [ARGS]"
             echo "Options:"
-            echo "  --run, -r              Run test calculation"
-            echo "  --build, -b            Run smiles build test"
-            echo "  --comd, -c             Run command test"
-            echo "  --task, -t <task_dir>  Process tasks in specified directory"
-            echo "  --help, -h             Show this help message"
+            echo "  --run, -r                Process tasks in specified directory"
+            echo "  --smiles, -s             Build smiles"
+            echo "  --comd, -c [commands]    Run command test or process command string"
+            echo "                           Example: tasker -c \"scripts=(fchk) copy=(*.fchk>../FCclasses)\""
+            echo "  --all-comd, -ac          Run all commands"
+            echo "  --test, -t               Build test calculation"
+            echo "  --help, -h               Show this help message"
+            echo "Info:"
+            echo "Environment variable 'tasker' has been set."
             ;;
         *)
             tasker --help
