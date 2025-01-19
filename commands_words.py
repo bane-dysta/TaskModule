@@ -38,13 +38,18 @@ def parse_scripts(content):
     return commands
 
 def parse_multiwfn(content):
-    """处理 multiwfn=(input>template[,args]|input>template[,args],...) 格式的命令。
+    """处理 multiwfn=(template>input[,args]|template>input[,args],...) 格式的命令。
+    
+    注意：> 号前后的含义：
+    - > 号前面是模板文件名（不带.txt后缀）
+    - > 号后面是要分析的波函数文件（可以用通配符 *）
+    
     例如：
-    multiwfn=(output.wfn>ESP|output.fchk>IFCT,1-42,43-84|1.log>uv)
+    multiwfn=(hole123>*.fchk|fmo>*.fchk|Eorb>*.fchk)
     会生成命令：
-    multiwfn ./output.wfn < $wfn_examples/ESP.txt
-    multiwfn ./output.fchk < $wfn_examples/IFCT.txt 1-42 43-84
-    multiwfn ./1.log < $wfn_examples/uv.txt
+    multiwfn ./*.fchk < $wfn_examples/hole123.txt > mw_hole123_out.txt
+    multiwfn ./*.fchk < $wfn_examples/fmo.txt > mw_fmo_out.txt
+    multiwfn ./*.fchk < $wfn_examples/Eorb.txt > mw_Eorb_out.txt
     """
     items = content.split('|')
     commands = []
@@ -59,9 +64,9 @@ def parse_multiwfn(content):
         args = [arg.strip() for arg in parts[1:]]  # 获取额外参数
         
         if '>' in main_command:
-            input_file, template = main_command.split('>')
-            input_file = input_file.strip()
+            template, input_file = main_command.split('>')  # 注意：template在前，input_file在后
             template = template.strip()
+            input_file = input_file.strip()
             
             # 构建基本命令
             base_cmd = f"Multiwfn ./{input_file} < $wfn_examples/{template}.txt"
@@ -130,6 +135,46 @@ def parse_move(content):
             commands.append(f"mv {source} {target}")
     return commands
 
+def parse_convtest(content, task_name=None):
+    """处理 convtest 命令。
+    将任务路径写入 ~/.sub/conv_test_list.txt 文件，并生成检查和移除的命令。
+    
+    Args:
+        content: 命令内容
+        task_name: 当前任务名称
+        
+    Returns:
+        list: 包含检查和移除命令的列表
+    """
+    # 确保 ~/.sub 目录存在
+    sub_dir = os.path.expanduser("~/.sub")
+    os.makedirs(sub_dir, exist_ok=True)
+    
+    # 获取当前工作目录的绝对路径
+    base_path = os.path.abspath(os.getcwd())
+    
+    # 如果有任务名，添加到路径中
+    if task_name:
+        abs_path = os.path.join(base_path, task_name)
+    else:
+        abs_path = base_path
+        
+    # 写入路径到文件
+    conv_test_file = os.path.join(sub_dir, "conv_test_list.txt")
+    with open(conv_test_file, "a") as f:
+        f.write(f"{abs_path}\n")
+    
+    # 生成检查和移除的命令
+    escaped_path = abs_path.replace('"', '\\"')  # 转义双引号
+    commands = [
+        f'if grep -q "^{escaped_path}$" ~/.sub/conv_test_list.txt; then',
+        '    grep -v "^' + escaped_path + '$" ~/.sub/conv_test_list.txt > ~/.sub/conv_test_list.txt.tmp',
+        '    mv ~/.sub/conv_test_list.txt.tmp ~/.sub/conv_test_list.txt',
+        'fi'
+    ]
+    
+    return commands
+
 def default_handler(command):
     """默认处理器，直接返回原始命令。"""
     return [command]
@@ -140,19 +185,22 @@ COMMAND_DISPATCH = {
     "multiwfn": parse_multiwfn,
     "copy": parse_copy,
     "move": parse_move,  # 添加新的 move 命令处理器
+    "convtest": parse_convtest,  # 添加新的 convtest 命令处理器
 }
 
-def handle_command(command):
+def handle_command(command, task_name=None):
     """根据命令的类型选择合适的处理函数。"""
     if '=' in command:
         key, content = command.split('=', 1)
         key = key.strip()
         content = content.strip("()")  # 去除括号
         if key in COMMAND_DISPATCH:
+            if key == "convtest":
+                return COMMAND_DISPATCH[key](content, task_name)  # 对于 convtest 命令传递任务名
             return COMMAND_DISPATCH[key](content)  # 调用对应的处理函数
     return default_handler(command)  # 默认处理器
 
-def parse_and_write_commands(commands, output_dir):
+def parse_and_write_commands(commands, output_dir, task_name=None):
     """
     解析命令并将处理后的结果写入 comd 文件。
     """
@@ -168,9 +216,10 @@ def parse_and_write_commands(commands, output_dir):
 
             # 逐个解析并写入命令
             for command in commands:
-                processed_commands = handle_command(command)
-                for line in processed_commands:
-                    f.write(line + "\n")
+                processed_commands = handle_command(command, task_name)
+                if processed_commands is not None:  # 只有当返回值不是 None 时才写入
+                    for line in processed_commands:
+                        f.write(line + "\n")
 
         print(f"Commands written to: {output_file}")
 

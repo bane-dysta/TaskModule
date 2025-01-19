@@ -19,7 +19,13 @@ export tasker="$AUTOTASKER_BASE_PATH"
 tasker() {
     case "$1" in
         --run|-r)
-            python "$AUTOTASKER_BASE_PATH/task_module.py"
+            if [ -n "$2" ]; then
+                # 获取输入路径的父目录
+                parent_dir=$(dirname "$2")
+                python "$AUTOTASKER_BASE_PATH/task_module.py" "$parent_dir"
+            else
+                python "$AUTOTASKER_BASE_PATH/task_module.py"
+            fi
             ;;
         --smiles|-s)
             python "$AUTOTASKER_BASE_PATH/case/test_SmilesBuild.py"
@@ -36,7 +42,8 @@ tasker() {
         --help|-h)
             echo "Usage: tasker [OPTION] [ARGS]"
             echo "Options:"
-            echo "  --run, -r                Process tasks in specified directory"
+            echo "  --run, -r [task_dir]     Process tasks in task_dir's parent directory"
+            echo "                           If task_dir is not provided, use default path"
             echo "  --smiles, -s             Build smiles"
             echo "  --comd, -c [commands]    Run command test or process command string"
             echo "                           Example: tasker -c \"scripts=(fchk) copy=(*.fchk>../FCclasses)\""

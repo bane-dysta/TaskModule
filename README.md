@@ -12,6 +12,7 @@ Tasker是一套Python脚本工具集，用于自动化生成Gaussian计算任务
 - 结合作业调度系统，实现通过调用Multiwfn或运行自定义脚本等方式进行自动后处理
 
 Tasker套件有配套可视化工具Orbital viewer，支持在Windows平台下对轨道进行一键可视化。
+
 ## 🔧运行环境
 - 系统：Linux(谁家量化计算在Windows上做啊)
 - 网络需求：在以CAS号形式输入结构时，需要连接网络调用PubChem的API接口
@@ -38,6 +39,13 @@ Tasker套件有配套可视化工具Orbital viewer，支持在Windows平台下�
 
 设置完毕后，运行task_module.py，程序会识别AUTOTASKER_CALC_PATH的子目录下文件名相同的一对(task,com/gjf)文件，按照task文件中的设定来生成gjf文件。推荐结合作业调度系统和crontab使用，以达到全自动生成、提交计算任务的目的。
 
+此外，env.sh中提供了tasker命令，可以用来运行task_module.py。
+```bash
+tasker -r,--run [task_dir]  # 运行task_dir的父目录下的所有任务
+tasker -t,--test            # 在当前目录下生成测试例case文件夹
+tasker -c,--comd [commands] # 解析命令字符串，生成comd文件。Example: tasker -c \"scripts=(fchk) copy=(*.fchk>../FCclasses)\"
+```
+
 ## ⚙️任务文件语法
 
 ### 任务名(`$`)
@@ -59,6 +67,7 @@ add = density.wfn     # 读取额外输入
 %smiles=50-00-0     # 使用CAS号生成
 %task_name          # 使用其他任务的计算结果
 %restart            # 重新提交该任务(注意！这会覆盖当前任务。)
+%file=path/to/file  # 使用指定文件作为结构来源，支持gjf,com,log,xyz文件。
 ```
 
 %task_name是最频繁使用的结构来源，这会请求tasker从任务名为task_name的任务正常结束的输出文件中提取最后一帧的结构。例如：

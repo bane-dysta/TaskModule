@@ -497,7 +497,7 @@ def process_task_folder(task_dir, output_base_dir):
 
             if task_info.get('command_words'):
                 logging.info(f"Processing command words for task: {task_info['job_title']}")
-                parse_and_write_commands(task_info['command_words'], task_output_dir)
+                parse_and_write_commands(task_info['command_words'], task_output_dir, task_info['job_title'])
 
         logging.info(f"Leaving task: {os.path.basename(task_file_path)}\n")
 
@@ -515,8 +515,19 @@ def process_all_tasks(base_dir):
 
 if __name__ == "__main__":
     print("----Starting TASKER----")
-    print(f"Processing : {TASKS_DIR}")
+    
+    # 获取命令行参数指定的路径，如果没有则使用默认路径
+    tasks_dir = TASKS_DIR
+    if len(sys.argv) > 1:
+        custom_path = os.path.abspath(sys.argv[1])
+        if os.path.exists(custom_path):
+            tasks_dir = custom_path
+            print(f"Using custom path: {tasks_dir}")
+        else:
+            print(f"Warning: Custom path {custom_path} does not exist, using default path")
+    
+    print(f"Processing : {tasks_dir}")
     
     # 处理所有任务
-    process_all_tasks(TASKS_DIR)
+    process_all_tasks(tasks_dir)
     print("----TASKER complete----")

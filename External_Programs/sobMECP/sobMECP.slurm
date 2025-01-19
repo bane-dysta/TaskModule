@@ -6,11 +6,12 @@
 #SBATCH -p tyhctest
 
 # 运行环境
-source "/work/home/gaus11/apprepo/orca/6.0.1-openmpi416_gcc930/scripts/env.sh"
+source "$HOME/apprepo/orca/6.0.1-openmpi416_gcc930/scripts/env.sh"
 source "$HOME/apprepo/gaussian/16-hy/scripts/env.sh"
 export PGI_FASTMATH_CPU=sandybridge
 
-# 运行 Multiwfn
+# 运行sobMECP
+./prepare.sh
 ./runfirst.sh
 ./runMECP.sh
 
