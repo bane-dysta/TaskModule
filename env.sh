@@ -27,6 +27,37 @@ tasker() {
                 python "$AUTOTASKER_BASE_PATH/task_module.py"
             fi
             ;;
+        --gen|-g)
+            if [ -n "$3" ]; then
+                # 有输入文件和模板名
+                python "$AUTOTASKER_BASE_PATH/case/tasker_gen_fromtxt.py" "$2" "$3"
+            elif [ -n "$2" ]; then
+                # 只有输入文件
+                python "$AUTOTASKER_BASE_PATH/case/tasker_gen_fromtxt.py" "$2"
+            else
+                # 无参数
+                python "$AUTOTASKER_BASE_PATH/case/tasker_gen_fromtxt.py"
+            fi
+            ;;
+        --redo|-re)
+            # 在当前目录搜索 .task 文件
+            task_files=$(find . -maxdepth 1 -name "*.task")
+            if [ -z "$task_files" ]; then
+                echo "No .task files found in current directory"
+                return 1
+            fi
+            
+            for task_file in $task_files; do
+                if [ -n "$2" ]; then
+                    # 如果提供了参数，只移除匹配的任务名的双引号
+                    sed -i "s/\$\"$2\"/\$$2/" "$task_file"
+                else
+                    # 移除所有任务名的双引号
+                    sed -i 's/\$"\([^"]*\)"/\$\1/' "$task_file"
+                fi
+                echo "Processed $task_file"
+            done
+            ;;
         --smiles|-s)
             python "$AUTOTASKER_BASE_PATH/case/test_SmilesBuild.py"
             ;;
@@ -44,6 +75,11 @@ tasker() {
             echo "Options:"
             echo "  --run, -r [task_dir]     Process tasks in task_dir's parent directory"
             echo "                           If task_dir is not provided, use default path"
+            echo "  --gen, -g [input_file] [template]  Generate task from template in current directory"
+            echo "                           input_file: Optional, use first log file if not provided"
+            echo "                           template: Optional, template name in templates directory"
+            echo "  --redo, -re [task_name]  Remove quotes from task names in current directory"
+            echo "                           If task_name is provided, only remove quotes from matching tasks"
             echo "  --smiles, -s             Build smiles"
             echo "  --comd, -c [commands]    Run command test or process command string"
             echo "                           Example: tasker -c \"scripts=(fchk) copy=(*.fchk>../FCclasses)\""

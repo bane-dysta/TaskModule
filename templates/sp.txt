@@ -1,0 +1,4 @@
+$sp
+%origin
+# M062X/def2-TZVP scrf=(SMD,solvent=water)
+

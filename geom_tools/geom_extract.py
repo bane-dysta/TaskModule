@@ -19,14 +19,14 @@ atomic_number_to_symbol = {
     '110': 'Ds', '111': 'Rg', '112': 'Cn', '113': 'Nh', '114': 'Fl', '115': 'Mc', '116': 'Lv', '117': 'Ts', '118': 'Og'
 }
 
-def extract_info_from_gfj(gfj_file_path):
+def extract_info_from_gjf(gjf_file_path):
     result = {
         'charge': None,
         'spin_multiplicity': None,
         'coordinates': []
     }
 
-    with open(gfj_file_path, 'r') as file:
+    with open(gjf_file_path, 'r') as file:
         lines = file.readlines()
         start_reading = False
         for line in lines:
@@ -58,11 +58,27 @@ def extract_info_from_gfj(gfj_file_path):
                     continue
                 
             # 识别电荷和自旋多重度的部分，类似于原来的代码
-            elif re.match(r'^\s*\d+\s+\d+', line):
-                charge_spin = line.strip().split()
-                result['charge'] = int(charge_spin[0])
-                result['spin_multiplicity'] = int(charge_spin[1])
-                start_reading = True
+            elif re.match(r'^\s*-?\d+\s+\d+', line):  # 修改正则表达式以支持负号
+                try:
+                    charge_spin = line.strip().split()
+                    if len(charge_spin) >= 2:
+                        # 使用更健壮的转换方式
+                        charge = int(charge_spin[0])
+                        spin = int(charge_spin[1])
+                        # 添加基本的验证
+                        if spin > 0:  # 自旋多重度必须大于0
+                            result['charge'] = charge
+                            result['spin_multiplicity'] = spin
+                            start_reading = True
+                        else:
+                            print(f"Warning: Invalid spin multiplicity {spin} in {gjf_file_path}")
+                except ValueError as e:
+                    print(f"Warning: Failed to parse charge/spin line '{line.strip()}' in {gjf_file_path}: {e}")
+                    continue
+    
+    # 添加结果验证
+    if result['charge'] is None or result['spin_multiplicity'] is None:
+        print(f"Warning: Failed to extract charge/spin from {gjf_file_path}")
     
     return result
 
@@ -247,6 +263,6 @@ def extract_info_from_input(input_file):
     if ext == '.xyz':
         return extract_info_from_xyz(input_file)
     elif ext in ['.gjf', '.com']:
-        return extract_info_from_gfj(input_file)
+        return extract_info_from_gjf(input_file)
     else:
         raise ValueError(f"Unsupported file format: {ext}")

@@ -3,8 +3,9 @@ import re
 import sys
 import logging
 import shutil
-from task_generator import check_and_expand_task_file
-from config import AUTOTASKER_GEOMTOOLS_PATH, AUTOTASKER_CALC_PATH, AUTOTASKER_LOG_PATH, AUTOTASKER_BASE_PATH, AUTOTASKER_TEMPLATES_PATH
+from task_find_template import check_and_expand_task_file
+from config import AUTOTASKER_GEOMTOOLS_PATH, AUTOTASKER_BASE_PATH, AUTOTASKER_LOG_PATH, AUTOTASKER_TEMPLATES_PATH
+from task_finder import find_task_files, find_input_file, TASKS_DIR
 
 # 获取当前脚本所在目录
 current_dir = os.path.dirname(os.path.abspath(__file__))
@@ -17,11 +18,10 @@ script_path1 = AUTOTASKER_GEOMTOOLS_PATH
 script_path2 = AUTOTASKER_BASE_PATH
 sys.path.append(script_path1)
 sys.path.append(script_path2)
-# 定义任务路径
-TASKS_DIR = AUTOTASKER_CALC_PATH
+
 ORCA_TEMPLATES_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'ORCA')
 
-from geom_extract import extract_info_from_gfj, extract_final_optimized_coordinates_from_log, extract_info_from_input
+from geom_extract import extract_final_optimized_coordinates_from_log, extract_info_from_input
 from commands_words import parse_and_write_commands
 
 # 定义新的日志级别 'skip'，设定为比 'info' 低
@@ -387,25 +387,20 @@ def create_gjf_from_task(task_info, input_file, output_dir, log_data=None, geome
         logging.error(f"Error in create_gjf_from_task: {str(e)}")
         raise
 
-def process_task_folder(task_dir, output_base_dir):
+def process_task_folder(task_dir, task_file_path):
     """
-    Process each task folder, parse tasks and generate corresponding gjf files, and handle commands.
+    处理单个任务文件夹中的任务。
+    
+    Args:
+        task_dir: 任务目录路径
+        task_file_path: 任务文件路径
     """
     try:
-        # Find .task files
-        task_files = [f for f in os.listdir(task_dir) if f.endswith(".task")]
-        
-        if not task_files:
-            logging.info(f"No .task files found in {task_dir}")
-            return
-        
-        task_file_path = os.path.join(task_dir, task_files[0])
-
         if not check_and_expand_task_file(task_file_path):
             logging.error(f"Failed to process task template in {task_file_path}")
             return
 
-        # Parse .task file first to check if we need ORCA generator
+        # 解析任务文件
         tasks = parse_task_file(task_file_path)
         
         # 只在有 ORCA 任务时才创建生成器
@@ -413,45 +408,37 @@ def process_task_folder(task_dir, output_base_dir):
         if any(task.get('type') == 'orca' for task in tasks):
             orca_generator = OrcaInputGenerator(ORCA_TEMPLATES_PATH)
 
-        # Find input file with the same base name as the .task file
-        task_base_name = os.path.splitext(task_files[0])[0]
-        possible_extensions = ['.com', '.gjf', '.xyz']
-        input_file = None
-        
-        # 按优先级顺序查找输入文件
-        for ext in possible_extensions:
-            possible_file = os.path.join(task_dir, task_base_name + ext)
-            if os.path.exists(possible_file):
-                input_file = possible_file
-                break
+        # 查找输入文件
+        task_base_name = os.path.splitext(os.path.basename(task_file_path))[0]
+        input_file = find_input_file(task_dir, task_base_name)
 
         if not input_file:
             logging.error(f"No input file (.com, .gjf, or .xyz) found for {task_file_path}")
             return
 
-        # Get original file name (without path and extension)
+        # 获取原始文件名（不含路径和扩展名）
         original_file_name = os.path.splitext(os.path.basename(input_file))[0]
         
         logging.info(f"Starting task: {os.path.basename(task_file_path)}")
         
+        # 处理每个任务
         for task_info in tasks:
             task_output_dir = os.path.join(task_dir, task_info['job_title'])
 
-            # 首先检查是否是已处理过的任务
+            # 检查是否是已处理过的任务
             if task_info.get('quoted', False):
                 logger.skip(f"{task_info['job_title']} already processed.")
                 continue
 
-            # 检查任务类型并分别处理
+            # 处理 ORCA 任务
             if task_info.get('type') == 'orca':
                 if orca_generator is None:
                     orca_generator = OrcaInputGenerator(ORCA_TEMPLATES_PATH)
-                # ORCA 任务处理
                 orca_generator.generate_input(task_info, task_dir, task_output_dir)
                 update_task_title_with_quotes(task_file_path, task_info)
                 continue
 
-            # Gaussian 任务处理
+            # 处理 Gaussian 任务
             geometry_data = process_smiles_field(task_info, task_dir)
             if geometry_data:
                 create_gjf_from_task(task_info, input_file, task_output_dir, geometry_data=geometry_data)
@@ -459,7 +446,7 @@ def process_task_folder(task_dir, output_base_dir):
                 logger.skip(f"{task_info['job_title']} is based on SMILES and does not need log file processing.")
                 continue
 
-            # 处理 %restart 的逻辑
+            # 处理重启任务
             if task_info['source'] == "restart":
                 log_file = os.path.join(task_output_dir, f"{task_info['job_title']}_{original_file_name}.log")
                 if os.path.exists(log_file):
@@ -470,9 +457,8 @@ def process_task_folder(task_dir, output_base_dir):
                     logging.error(f"Log file {log_file} not found for restart.")
                     continue
             
-            # 处理依赖于其他任务的情况
+            # 处理依赖任务
             elif task_info['source'] != "origin":
-                # 构建前一个任务的日志文件路径
                 prev_task_log = os.path.join(
                     task_dir, 
                     task_info['source'], 
@@ -495,6 +481,7 @@ def process_task_folder(task_dir, output_base_dir):
 
             update_task_title_with_quotes(task_file_path, task_info)
 
+            # 处理命令词
             if task_info.get('command_words'):
                 logging.info(f"Processing command words for task: {task_info['job_title']}")
                 parse_and_write_commands(task_info['command_words'], task_output_dir, task_info['job_title'])
@@ -504,30 +491,26 @@ def process_task_folder(task_dir, output_base_dir):
     except Exception as e:
         logging.error(f"Error processing task folder {task_dir}: {str(e)}")
 
-def process_all_tasks(base_dir):
-    """
-    遍历所有任务文件夹，逐个处理
-    """
-    for subdir in os.listdir(base_dir):
-        task_dir = os.path.join(base_dir, subdir)
-        if os.path.isdir(task_dir):
-            process_task_folder(task_dir, task_dir)  # 任务的输出文件夹为当前目录下
-
 if __name__ == "__main__":
     print("----Starting TASKER----")
     
-    # 获取命令行参数指定的路径，如果没有则使用默认路径
-    tasks_dir = TASKS_DIR
+    # 获取命令行参数指定的路径，如果没有则使用 task_finder 中的默认路径
+    search_dir = TASKS_DIR
     if len(sys.argv) > 1:
         custom_path = os.path.abspath(sys.argv[1])
         if os.path.exists(custom_path):
-            tasks_dir = custom_path
-            print(f"Using custom path: {tasks_dir}")
+            search_dir = custom_path
+            print(f"Using custom path: {search_dir}")
         else:
             print(f"Warning: Custom path {custom_path} does not exist, using default path")
     
-    print(f"Processing : {tasks_dir}")
+    print(f"Processing tasks in: {search_dir}")
     
-    # 处理所有任务
-    process_all_tasks(tasks_dir)
+    # 使用 task_finder 查找任务
+    task_files = find_task_files(search_dir)
+    
+    # 处理找到的每个任务
+    for task_dir, task_file in task_files:
+        process_task_folder(task_dir, task_file)
+        
     print("----TASKER complete----")
